@@ -10,7 +10,10 @@ namespace JokerGO.Game
     public sealed class EnvironmentBuilder : MonoBehaviour
     {
         private const int RandomSeed = 7;
-        private const float PathClearance = 2.7f;
+        // Clearance is measured along world X from the nearest tile's x; on steep bends the
+        // perpendicular distance shrinks (cos of the slope) and the nearest-tile snap adds
+        // up to ~0.6 of error, so this is deliberately generous to keep canopies off tiles.
+        private const float PathClearance = 3.9f;
         private const float ScatterWidth = 11f;
 
         private Material trunkMaterial;

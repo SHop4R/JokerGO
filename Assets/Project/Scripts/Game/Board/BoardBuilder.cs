@@ -28,7 +28,11 @@ namespace JokerGO.Game.Board
             }
         }
 
-        /// <summary>Normalized travel direction at a tile (toward the next tile, wrap-aware).</summary>
+        /// <summary>
+        /// Normalized travel direction at a tile. The last tile continues its incoming
+        /// segment instead of pointing back across the board along the wrap chord —
+        /// this feeds the dice tray, which must stay in front of the camera.
+        /// </summary>
         public Vector3 PathDirectionAt(int tileIndex)
         {
             if (positions == null || positions.Length < 2)
@@ -36,7 +40,9 @@ namespace JokerGO.Game.Board
                 return Vector3.forward;
             }
 
-            Vector3 direction = positions[(tileIndex + 1) % positions.Length] - positions[tileIndex];
+            Vector3 direction = tileIndex >= positions.Length - 1
+                ? positions[positions.Length - 1] - positions[positions.Length - 2]
+                : positions[tileIndex + 1] - positions[tileIndex];
             direction.y = 0f;
             return direction.sqrMagnitude < 0.0001f ? Vector3.forward : direction.normalized;
         }

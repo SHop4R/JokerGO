@@ -20,6 +20,7 @@ namespace JokerGO.Game
         private const int HopAccelStartSteps = 8;
         private const int HopAccelMaxSteps = 60;
         private const float DiceTrayForwardOffset = 2.2f;
+        private const float MaxTrayLateralOffset = 0.9f;
 
         private GameSession session;
         private BoardBuilder board;
@@ -63,9 +64,11 @@ namespace JokerGO.Game
         private void OnRollStarted(IReadOnlyList<int> values)
         {
             // The tray sits ahead along the path's travel direction; dice are gone
-            // before the token hops through.
-            Vector3 trayCenter = board.TokenPositionOn(session.CurrentTileIndex)
-                                 + board.PathDirectionAt(session.CurrentTileIndex) * DiceTrayForwardOffset;
+            // before the token hops through. Lateral drift is clamped so a wide
+            // dice row cannot slide off the portrait frame on steep bends.
+            Vector3 trayOffset = board.PathDirectionAt(session.CurrentTileIndex) * DiceTrayForwardOffset;
+            trayOffset.x = Mathf.Clamp(trayOffset.x, -MaxTrayLateralOffset, MaxTrayLateralOffset);
+            Vector3 trayCenter = board.TokenPositionOn(session.CurrentTileIndex) + trayOffset;
             dice.Show(values, trayCenter, session.NotifyDiceShown, OnDieImpact);
         }
 

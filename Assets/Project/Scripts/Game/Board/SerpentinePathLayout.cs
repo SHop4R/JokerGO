@@ -13,6 +13,24 @@ namespace JokerGO.Game.Board
 
         public static Vector3[] Compute(int tileCount, float spacing, float amplitude, float wavelength)
         {
+            if (tileCount < 1)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(tileCount), tileCount,
+                    "At least one tile is required.");
+            }
+
+            if (spacing <= 0f)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(spacing), spacing,
+                    "Tile spacing must be positive.");
+            }
+
+            if (wavelength <= 0f)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(wavelength), wavelength,
+                    "Path wavelength must be positive.");
+            }
+
             var positions = new Vector3[tileCount];
             positions[0] = PointAt(0f, amplitude, wavelength);
 
@@ -25,7 +43,16 @@ namespace JokerGO.Game.Board
                 Vector3 candidate = previous;
                 while ((candidate - previous).sqrMagnitude < spacing * spacing)
                 {
-                    z += StepSize;
+                    float advanced = z + StepSize;
+                    if (advanced == z)
+                    {
+                        // float32 stops advancing around z ~ 2^18; a pathological tile count
+                        // in map.json must fail loudly instead of hanging the main thread.
+                        throw new System.InvalidOperationException(
+                            $"Path layout step underflow at tile {i}; the map is too long to lay out.");
+                    }
+
+                    z = advanced;
                     candidate = PointAt(z, amplitude, wavelength);
                 }
 
