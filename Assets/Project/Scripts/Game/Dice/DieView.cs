@@ -31,7 +31,8 @@ namespace JokerGO.Game.Dice
         }
 
         /// <summary>Arc to the rest position, bounce twice, settle with the value face-up.</summary>
-        public IEnumerator TumbleTo(Vector3 restPosition, int value, float duration)
+        public IEnumerator TumbleTo(Vector3 restPosition, int value, float duration,
+            System.Action<Vector3> onFirstImpact = null)
         {
             Quaternion finalRotation = DieFaceLayout.RotationShowing(value, Random.Range(0f, 360f));
             Vector3 spinAxis = Random.onUnitSphere;
@@ -53,6 +54,8 @@ namespace JokerGO.Game.Dice
                 transform.rotation = Quaternion.AngleAxis(spinSpeed * Time.deltaTime, spinAxis) * transform.rotation;
                 yield return null;
             }
+
+            onFirstImpact?.Invoke(restPosition);
 
             // Two shrinking bounces; the spin decays and starts blending toward the target face.
             Quaternion bounceStartRotation = transform.rotation;

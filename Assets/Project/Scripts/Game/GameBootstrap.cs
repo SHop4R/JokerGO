@@ -3,6 +3,7 @@ using JokerGO.Core;
 using JokerGO.Game.Board;
 using JokerGO.Game.Data;
 using JokerGO.Game.Dice;
+using JokerGO.Game.Fx;
 using JokerGO.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -57,14 +58,22 @@ namespace JokerGO.Game
             PlayerTokenView token = PlayerTokenView.Create(
                 board.TokenPositionOn(startTile), boardStyle.GetItemMaterial(ItemType.Strawberry));
 
-            AttachCamera(token.transform);
+            FollowCamera followCamera = AttachCamera(token.transform);
+
+            EnsureEventSystem();
+            GameHud hud = GameHud.Create(Session);
 
             var flow = new GameObject("GameFlow");
             var diceDirector = flow.AddComponent<DiceRollDirector>();
-            flow.AddComponent<GameFlowPresenter>().Initialize(Session, board, token, diceDirector);
+            flow.AddComponent<GameFlowPresenter>().Initialize(
+                Session, board, token, diceDirector, followCamera, hud, Camera.main);
 
-            EnsureEventSystem();
-            GameHud.Create(Session);
+            EnvironmentBuilder.Build(map.TileCount * boardStyle.TileSpacing);
+            PostFxBuilder.Apply();
+            if (Camera.main != null)
+            {
+                ParticleFx.CreateAmbientLeaves(Camera.main.transform);
+            }
 
             Debug.Log($"[JokerGO] Board ready: {map.TileCount} tiles. Player on tile {Session.CurrentTileIndex + 1}.");
         }
@@ -77,13 +86,13 @@ namespace JokerGO.Game
             }
         }
 
-        private static void AttachCamera(Transform target)
+        private static FollowCamera AttachCamera(Transform target)
         {
             Camera camera = Camera.main;
             if (camera == null)
             {
                 Debug.LogError("[JokerGO] No MainCamera in scene; cannot attach follow camera.");
-                return;
+                return null;
             }
 
             var follow = camera.GetComponent<FollowCamera>();
@@ -93,6 +102,7 @@ namespace JokerGO.Game
             }
 
             follow.SetTarget(target, snap: true);
+            return follow;
         }
     }
 }

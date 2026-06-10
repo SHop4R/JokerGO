@@ -14,6 +14,8 @@ namespace JokerGO.UI
         private DicePanelView dicePanel;
         private InventoryPanelView inventoryPanel;
         private TileLogView tileLog;
+        private CollectFlightLayer flightLayer;
+        private Inventory pendingInventory;
 
         public static GameHud Create(GameSession session)
         {
@@ -24,6 +26,7 @@ namespace JokerGO.UI
             hud.dicePanel = DicePanelView.Build(canvas.transform);
             hud.inventoryPanel = InventoryPanelView.Build(canvas.transform);
             hud.tileLog = TileLogView.Build(canvas.transform);
+            hud.flightLayer = CollectFlightLayer.Build(canvas.transform);
 
             hud.inventoryPanel.Refresh(session.Inventory);
             hud.dicePanel.RollRequested += hud.OnRollRequested;
@@ -72,12 +75,31 @@ namespace JokerGO.UI
 
         private void OnItemsCollected(Inventory inventory, ItemStack gained)
         {
-            inventoryPanel.Refresh(inventory);
+            // Refresh is deferred until the collect flight lands (see ShowCollectFlight);
+            // OnTurnEnded acts as the safety net if no flight was played.
+            pendingInventory = inventory;
+        }
+
+        /// <summary>Plays chips flying from a screen point to the matching counter.</summary>
+        public void ShowCollectFlight(Vector2 screenPosition, ItemStack gained)
+        {
+            int chips = Mathf.Clamp(gained.Amount, 3, 7);
+            flightLayer.Fly(screenPosition, gained.Type, inventoryPanel.CounterTarget(gained.Type),
+                chips, () =>
+                {
+                    if (pendingInventory != null)
+                    {
+                        inventoryPanel.Refresh(pendingInventory);
+                    }
+
+                    inventoryPanel.Punch(gained.Type);
+                });
         }
 
         private void OnTurnEnded()
         {
             dicePanel.SetInteractable(true);
+            inventoryPanel.Refresh(session.Inventory);
         }
     }
 }

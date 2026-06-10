@@ -43,7 +43,8 @@ namespace JokerGO.Game.Dice
         }
 
         /// <summary>Plays the tumble for the given values; calls onAllSettled once every die rests.</summary>
-        public void Show(IReadOnlyList<int> values, Vector3 trayCenter, Action onAllSettled)
+        public void Show(IReadOnlyList<int> values, Vector3 trayCenter, Action onAllSettled,
+            Action<Vector3> onDieImpact = null)
         {
             if (values == null)
             {
@@ -51,7 +52,7 @@ namespace JokerGO.Game.Dice
             }
 
             DismissImmediately();
-            StartCoroutine(ShowRoutine(values, trayCenter, onAllSettled));
+            StartCoroutine(ShowRoutine(values, trayCenter, onAllSettled, onDieImpact));
         }
 
         /// <summary>Shrinks the settled dice away (used once movement starts).</summary>
@@ -68,7 +69,8 @@ namespace JokerGO.Game.Dice
             activeDice.Clear();
         }
 
-        private IEnumerator ShowRoutine(IReadOnlyList<int> values, Vector3 trayCenter, Action onAllSettled)
+        private IEnumerator ShowRoutine(IReadOnlyList<int> values, Vector3 trayCenter,
+            Action onAllSettled, Action<Vector3> onDieImpact)
         {
             int rows = Mathf.CeilToInt(values.Count / (float)DicePerRow);
             int remaining = values.Count;
@@ -91,7 +93,7 @@ namespace JokerGO.Game.Dice
                                              UnityEngine.Random.Range(-0.3f, 0.3f));
                 activeDice.Add(die);
 
-                pending.Add(StartCoroutine(die.TumbleTo(rest, values[i], TumbleDuration)));
+                pending.Add(StartCoroutine(die.TumbleTo(rest, values[i], TumbleDuration, onDieImpact)));
                 remaining--;
                 if (remaining > 0)
                 {

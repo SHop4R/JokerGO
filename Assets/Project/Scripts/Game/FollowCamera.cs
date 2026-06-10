@@ -9,8 +9,13 @@ namespace JokerGO.Game
         [SerializeField] private Vector3 lookAhead = new Vector3(0f, 0.5f, 2f);
         [SerializeField] private float smoothTime = 0.35f;
 
+        private const float ShakeDecay = 4.5f;
+        private const float ShakeFrequency = 28f;
+
         private Transform target;
         private Vector3 velocity;
+        private float shakeStrength;
+        private float shakeTime;
 
         public void SetTarget(Transform newTarget, bool snap)
         {
@@ -22,6 +27,12 @@ namespace JokerGO.Game
             }
         }
 
+        /// <summary>Adds a decaying positional shake on top of the follow motion.</summary>
+        public void AddShake(float strength)
+        {
+            shakeStrength = Mathf.Max(shakeStrength, strength);
+        }
+
         private void LateUpdate()
         {
             if (target == null)
@@ -31,6 +42,17 @@ namespace JokerGO.Game
 
             transform.position = Vector3.SmoothDamp(
                 transform.position, target.position + offset, ref velocity, smoothTime);
+
+            if (shakeStrength > 0.001f)
+            {
+                shakeTime += Time.deltaTime * ShakeFrequency;
+                shakeStrength = Mathf.MoveTowards(shakeStrength, 0f, ShakeDecay * shakeStrength * Time.deltaTime);
+                transform.position += new Vector3(
+                    (Mathf.PerlinNoise(shakeTime, 0.3f) - 0.5f),
+                    (Mathf.PerlinNoise(0.7f, shakeTime) - 0.5f),
+                    0f) * (2f * shakeStrength);
+            }
+
             LookAtTarget();
         }
 

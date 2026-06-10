@@ -45,6 +45,31 @@ namespace JokerGO.UI
             }
         }
 
+        /// <summary>Screen anchor that collect flights aim for.</summary>
+        public RectTransform CounterTarget(ItemType type) => countLabels[type].rectTransform;
+
+        /// <summary>Pops the counter when items arrive.</summary>
+        public void Punch(ItemType type)
+        {
+            StartCoroutine(PunchRoutine(countLabels[type].rectTransform));
+        }
+
+        private System.Collections.IEnumerator PunchRoutine(RectTransform target)
+        {
+            const float duration = 0.28f;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.5f;
+                target.localScale = Vector3.one * scale;
+                yield return null;
+            }
+
+            target.localScale = Vector3.one;
+        }
+
         private void BuildContent(RectTransform panel)
         {
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();

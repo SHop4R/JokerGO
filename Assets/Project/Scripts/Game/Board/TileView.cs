@@ -16,6 +16,9 @@ namespace JokerGO.Game.Board
         /// <summary>Where a token should stand on this tile.</summary>
         public Vector3 TokenAnchor { get; private set; }
 
+        private Transform block;
+        private Coroutine pressRoutine;
+
         public static TileView Create(MapTile tile, Vector3 position, BoardStyle style)
         {
             var root = new GameObject($"Tile {tile.DisplayNumber}");
@@ -30,12 +33,13 @@ namespace JokerGO.Game.Board
 
         private void BuildVisuals(BoardStyle style)
         {
-            var block = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            block.name = "Block";
-            block.transform.SetParent(transform, false);
-            block.transform.localScale = style.TileScale;
-            block.GetComponent<Renderer>().sharedMaterial =
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockGo.name = "Block";
+            blockGo.transform.SetParent(transform, false);
+            blockGo.transform.localScale = style.TileScale;
+            blockGo.GetComponent<Renderer>().sharedMaterial =
                 Tile.Index % 2 == 0 ? style.TileMaterialA : style.TileMaterialB;
+            block = blockGo.transform;
 
             GameObject number = CreateLabel("Number", Tile.DisplayNumber.ToString(),
                 style.NumberFontSize, style.NumberColor);
@@ -62,6 +66,45 @@ namespace JokerGO.Game.Board
                 style.NumberFontSize * 0.45f, style.GetItemMaterial(reward.Type).color);
             label.transform.SetParent(transform, false);
             label.transform.localPosition = Vector3.up * RewardLabelHeight;
+        }
+
+        /// <summary>Quick dip-and-spring of the block when something lands on the tile.</summary>
+        public void PressBounce()
+        {
+            if (pressRoutine != null)
+            {
+                StopCoroutine(pressRoutine);
+            }
+
+            pressRoutine = StartCoroutine(PressRoutine());
+        }
+
+        private System.Collections.IEnumerator PressRoutine()
+        {
+            const float dip = 0.085f;
+            const float downTime = 0.06f;
+            const float upTime = 0.22f;
+
+            Vector3 origin = Vector3.zero;
+            float elapsed = 0f;
+            while (elapsed < downTime)
+            {
+                elapsed += Time.deltaTime;
+                block.localPosition = origin + Vector3.down * (dip * Mathf.Clamp01(elapsed / downTime));
+                yield return null;
+            }
+
+            elapsed = 0f;
+            while (elapsed < upTime)
+            {
+                elapsed += Time.deltaTime;
+                float t = Tweening.Easing.Evaluate(Tweening.EaseType.EaseOutBack, elapsed / upTime);
+                block.localPosition = origin + Vector3.down * (dip * (1f - t));
+                yield return null;
+            }
+
+            block.localPosition = origin;
+            pressRoutine = null;
         }
 
         private static GameObject CreateLabel(string name, string text, float fontSize, Color color)
