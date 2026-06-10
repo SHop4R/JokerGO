@@ -35,10 +35,14 @@ namespace JokerGO.Game
             catch (MapValidationException e)
             {
                 Debug.LogError($"[JokerGO] Map error: {e.Message}");
+                ErrorScreen.Show(e.Message,
+                    "Fix Assets/StreamingAssets/map.json and restart the game.");
             }
             catch (Exception e)
             {
                 Debug.LogError($"[JokerGO] Failed to start: {e}");
+                ErrorScreen.Show("Something went wrong while starting the game.",
+                    "Check the console/log for details and restart the game.");
             }
         }
 
