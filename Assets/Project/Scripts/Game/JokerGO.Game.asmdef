@@ -3,7 +3,8 @@
     "rootNamespace": "JokerGO.Game",
     "references": [
         "JokerGO.Core",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
