@@ -1,0 +1,28 @@
+{
+  "tiles": [
+    { "item": "empty", "amount": 0 },
+    { "item": "apple", "amount": 5 },
+    { "item": "empty", "amount": 0 },
+    { "item": "pear", "amount": 3 },
+    { "item": "empty", "amount": 0 },
+    { "item": "pear", "amount": 8 },
+    { "item": "empty", "amount": 0 },
+    { "item": "strawberry", "amount": 15 },
+    { "item": "apple", "amount": 2 },
+    { "item": "empty", "amount": 0 },
+    { "item": "strawberry", "amount": 4 },
+    { "item": "empty", "amount": 0 },
+    { "item": "apple", "amount": 7 },
+    { "item": "empty", "amount": 0 },
+    { "item": "pear", "amount": 5 },
+    { "item": "empty", "amount": 0 },
+    { "item": "strawberry", "amount": 9 },
+    { "item": "apple", "amount": 3 },
+    { "item": "empty", "amount": 0 },
+    { "item": "pear", "amount": 12 },
+    { "item": "empty", "amount": 0 },
+    { "item": "strawberry", "amount": 6 },
+    { "item": "apple", "amount": 10 },
+    { "item": "empty", "amount": 0 }
+  ]
+}

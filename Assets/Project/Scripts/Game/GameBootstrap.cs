@@ -1,0 +1,72 @@
+using System;
+using JokerGO.Core;
+using JokerGO.Game.Board;
+using JokerGO.Game.Data;
+using UnityEngine;
+
+namespace JokerGO.Game
+{
+    /// <summary>
+    /// Composition root: loads data, builds the domain session and all presentation
+    /// objects in code, so the scene only needs this one component.
+    /// </summary>
+    public sealed class GameBootstrap : MonoBehaviour
+    {
+        public GameSession Session { get; private set; }
+
+        private void Start()
+        {
+            try
+            {
+                Initialize();
+            }
+            catch (MapValidationException e)
+            {
+                Debug.LogError($"[JokerGO] Map error: {e.Message}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[JokerGO] Failed to start: {e}");
+            }
+        }
+
+        private void Initialize()
+        {
+            IMapSource mapSource = new JsonMapSource();
+            ISaveRepository saveRepository = new FileSaveRepository();
+
+            BoardMap map = mapSource.Load();
+            (Inventory inventory, int startTile) = SaveDataMapper.FromSaveData(saveRepository.Load(), map.TileCount);
+            Session = new GameSession(map, saveRepository, inventory, startTile);
+
+            BoardStyle style = BoardStyle.CreateDefault();
+            var board = new GameObject("Board").AddComponent<BoardBuilder>();
+            board.Build(map, style);
+
+            PlayerTokenView token = PlayerTokenView.Create(
+                board.TokenPositionOn(startTile), style.GetItemMaterial(ItemType.Strawberry));
+
+            AttachCamera(token.transform);
+
+            Debug.Log($"[JokerGO] Board ready: {map.TileCount} tiles. Player on tile {Session.CurrentTileIndex + 1}.");
+        }
+
+        private static void AttachCamera(Transform target)
+        {
+            Camera camera = Camera.main;
+            if (camera == null)
+            {
+                Debug.LogError("[JokerGO] No MainCamera in scene; cannot attach follow camera.");
+                return;
+            }
+
+            var follow = camera.GetComponent<FollowCamera>();
+            if (follow == null)
+            {
+                follow = camera.gameObject.AddComponent<FollowCamera>();
+            }
+
+            follow.SetTarget(target, snap: true);
+        }
+    }
+}
