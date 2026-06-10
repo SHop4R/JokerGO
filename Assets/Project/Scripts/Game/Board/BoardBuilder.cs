@@ -4,22 +4,41 @@ using UnityEngine;
 
 namespace JokerGO.Game.Board
 {
-    /// <summary>Instantiates tile views for a <see cref="BoardMap"/> along a straight line.</summary>
+    /// <summary>Instantiates tile views for a <see cref="BoardMap"/> along a winding serpentine path.</summary>
     public sealed class BoardBuilder : MonoBehaviour
     {
         private readonly List<TileView> tileViews = new List<TileView>();
+        private Vector3[] positions;
 
         public IReadOnlyList<TileView> TileViews => tileViews;
 
+        /// <summary>Tile ground positions, exposed so the environment can keep the path clear.</summary>
+        public IReadOnlyList<Vector3> TilePositions => positions;
+
         public void Build(BoardMap map, BoardStyle style)
         {
+            positions = SerpentinePathLayout.Compute(
+                map.TileCount, style.TileSpacing, style.PathAmplitude, style.PathWavelength);
+
             for (int i = 0; i < map.TileCount; i++)
             {
-                Vector3 position = new Vector3(0f, 0f, i * style.TileSpacing);
-                TileView view = TileView.Create(map[i], position, style);
+                TileView view = TileView.Create(map[i], positions[i], style);
                 view.transform.SetParent(transform, worldPositionStays: true);
                 tileViews.Add(view);
             }
+        }
+
+        /// <summary>Normalized travel direction at a tile (toward the next tile, wrap-aware).</summary>
+        public Vector3 PathDirectionAt(int tileIndex)
+        {
+            if (positions == null || positions.Length < 2)
+            {
+                return Vector3.forward;
+            }
+
+            Vector3 direction = positions[(tileIndex + 1) % positions.Length] - positions[tileIndex];
+            direction.y = 0f;
+            return direction.sqrMagnitude < 0.0001f ? Vector3.forward : direction.normalized;
         }
 
         public Vector3 TokenPositionOn(int tileIndex)

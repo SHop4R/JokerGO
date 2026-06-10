@@ -62,9 +62,10 @@ namespace JokerGO.Game
 
         private void OnRollStarted(IReadOnlyList<int> values)
         {
-            // The tray sits on the path ahead of the token; dice are gone before it hops through.
+            // The tray sits ahead along the path's travel direction; dice are gone
+            // before the token hops through.
             Vector3 trayCenter = board.TokenPositionOn(session.CurrentTileIndex)
-                                 + Vector3.forward * DiceTrayForwardOffset;
+                                 + board.PathDirectionAt(session.CurrentTileIndex) * DiceTrayForwardOffset;
             dice.Show(values, trayCenter, session.NotifyDiceShown, OnDieImpact);
         }
 

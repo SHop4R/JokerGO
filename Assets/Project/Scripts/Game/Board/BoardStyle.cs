@@ -9,6 +9,8 @@ namespace JokerGO.Game.Board
     public sealed class BoardStyle
     {
         public float TileSpacing { get; private set; }
+        public float PathAmplitude { get; private set; }
+        public float PathWavelength { get; private set; }
         public Vector3 TileScale { get; private set; }
         public float NumberFontSize { get; private set; }
         public Color NumberColor { get; private set; }
@@ -35,6 +37,8 @@ namespace JokerGO.Game.Board
             var style = new BoardStyle
             {
                 TileSpacing = 2.0f,
+                PathAmplitude = 2.8f,
+                PathWavelength = 24f,
                 TileScale = new Vector3(1.7f, 0.25f, 1.7f),
                 NumberFontSize = 8f,
                 NumberColor = new Color(0.15f, 0.12f, 0.08f)

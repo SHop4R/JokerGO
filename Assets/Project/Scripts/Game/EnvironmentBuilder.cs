@@ -1,31 +1,53 @@
-using JokerGO.Game.Board;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace JokerGO.Game
 {
     /// <summary>
     /// Procedural orchard dressing around the path: ground, trees, bushes and rocks,
-    /// scattered deterministically so every run looks the same.
+    /// scattered deterministically (and path-aware) so every run looks the same.
     /// </summary>
     public sealed class EnvironmentBuilder : MonoBehaviour
     {
         private const int RandomSeed = 7;
-        private const float PathClearance = 2.6f;
+        private const float PathClearance = 2.7f;
         private const float ScatterWidth = 11f;
 
         private Material trunkMaterial;
         private Material leavesMaterial;
         private Material groundMaterial;
         private Material rockMaterial;
+        private IReadOnlyList<Vector3> path;
 
-        public static EnvironmentBuilder Build(float pathLength)
+        public static EnvironmentBuilder Build(IReadOnlyList<Vector3> tilePositions)
         {
             var builder = new GameObject("Environment").AddComponent<EnvironmentBuilder>();
+            builder.path = tilePositions;
             builder.CreateMaterials();
-            builder.CreateGround(pathLength);
-            builder.Scatter(pathLength);
+            builder.CreateGround(builder.PathEndZ());
+            builder.Scatter(builder.PathEndZ());
             builder.TintWorld();
             return builder;
+        }
+
+        private float PathEndZ() => path.Count == 0 ? 0f : path[path.Count - 1].z;
+
+        /// <summary>Path x at a given z, from the nearest tile (the serpentine is monotonic in z).</summary>
+        private float PathCenterX(float z)
+        {
+            float bestX = 0f;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < path.Count; i++)
+            {
+                float distance = Mathf.Abs(path[i].z - z);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestX = path[i].x;
+                }
+            }
+
+            return bestX;
         }
 
         private void OnDestroy()
@@ -69,8 +91,9 @@ namespace JokerGO.Game
         private void PlaceProp(System.Random random, float z)
         {
             float side = random.Next(2) == 0 ? -1f : 1f;
-            float x = side * Mathf.Lerp(PathClearance, ScatterWidth, (float)random.NextDouble());
-            var position = new Vector3(x, 0f, z + (float)random.NextDouble() * 1.4f);
+            float offset = side * Mathf.Lerp(PathClearance, ScatterWidth, (float)random.NextDouble());
+            float propZ = z + (float)random.NextDouble() * 1.4f;
+            var position = new Vector3(PathCenterX(propZ) + offset, 0f, propZ);
 
             double kind = random.NextDouble();
             if (kind < 0.55)

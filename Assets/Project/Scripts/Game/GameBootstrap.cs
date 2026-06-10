@@ -72,7 +72,7 @@ namespace JokerGO.Game
             flow.AddComponent<GameFlowPresenter>().Initialize(
                 Session, board, token, diceDirector, followCamera, hud, Camera.main);
 
-            EnvironmentBuilder.Build(map.TileCount * boardStyle.TileSpacing);
+            EnvironmentBuilder.Build(board.TilePositions);
             PostFxBuilder.Apply();
             if (Camera.main != null)
             {
