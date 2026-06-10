@@ -28,11 +28,6 @@ namespace JokerGO.Game.Data
                 throw new MapValidationException($"Map file is not valid JSON: {e.Message}");
             }
 
-            if (dto == null)
-            {
-                throw new MapValidationException("Map file is empty or not valid JSON.");
-            }
-
             return BoardMapFactory.Create(dto);
         }
     }

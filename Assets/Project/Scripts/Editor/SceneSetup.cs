@@ -14,6 +14,12 @@ namespace JokerGO.Editor
         [MenuItem("JokerGO/Setup Scene _F9")]
         public static void Apply()
         {
+            // Gives the user a chance to save (or cancel) if another scene has unsaved edits.
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return;
+            }
+
             var scene = EditorSceneManager.OpenScene(ScenePath);
 
             if (Object.FindFirstObjectByType<GameBootstrap>() != null)

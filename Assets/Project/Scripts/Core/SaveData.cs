@@ -2,7 +2,11 @@ using System;
 
 namespace JokerGO.Core
 {
-    /// <summary>Serializable snapshot of persistent progress. Field names define the save JSON keys.</summary>
+    /// <summary>
+    /// Serializable snapshot of persistent progress. Field names define the save JSON keys.
+    /// Fields are public and mutable because JsonUtility requires it; treat instances as
+    /// write-once transfer objects, never as live state.
+    /// </summary>
     [Serializable]
     public sealed class SaveData
     {

@@ -14,6 +14,13 @@ namespace JokerGO.Game
     {
         public GameSession Session { get; private set; }
 
+        private BoardStyle boardStyle;
+
+        private void OnDestroy()
+        {
+            boardStyle?.DestroyMaterials();
+        }
+
         private void Start()
         {
             try
@@ -39,12 +46,12 @@ namespace JokerGO.Game
             (Inventory inventory, int startTile) = SaveDataMapper.FromSaveData(saveRepository.Load(), map.TileCount);
             Session = new GameSession(map, saveRepository, inventory, startTile);
 
-            BoardStyle style = BoardStyle.CreateDefault();
+            boardStyle = BoardStyle.CreateDefault();
             var board = new GameObject("Board").AddComponent<BoardBuilder>();
-            board.Build(map, style);
+            board.Build(map, boardStyle);
 
             PlayerTokenView token = PlayerTokenView.Create(
-                board.TokenPositionOn(startTile), style.GetItemMaterial(ItemType.Strawberry));
+                board.TokenPositionOn(startTile), boardStyle.GetItemMaterial(ItemType.Strawberry));
 
             AttachCamera(token.transform);
 

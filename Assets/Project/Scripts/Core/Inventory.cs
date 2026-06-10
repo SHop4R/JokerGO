@@ -28,11 +28,9 @@ namespace JokerGO.Core
 
         public static Inventory FromCounts(int apples, int pears, int strawberries)
         {
-            if (apples < 0 || pears < 0 || strawberries < 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(apples), "Inventory counts cannot be negative.");
-            }
+            RequireNonNegative(apples, nameof(apples));
+            RequireNonNegative(pears, nameof(pears));
+            RequireNonNegative(strawberries, nameof(strawberries));
 
             return new Inventory(new Dictionary<ItemType, int>
             {
@@ -40,6 +38,15 @@ namespace JokerGO.Core
                 [ItemType.Pear] = pears,
                 [ItemType.Strawberry] = strawberries
             });
+        }
+
+        private static void RequireNonNegative(int count, string parameterName)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(parameterName, count,
+                    "Inventory counts cannot be negative.");
+            }
         }
     }
 }

@@ -101,9 +101,17 @@ namespace JokerGO.Core
                 ItemsCollected?.Invoke(Inventory, reward);
             }
 
-            saveRepository.Save(SaveDataMapper.ToSaveData(Inventory, CurrentTileIndex));
-            State = SessionState.Idle;
-            TurnEnded?.Invoke();
+            try
+            {
+                saveRepository.Save(SaveDataMapper.ToSaveData(Inventory, CurrentTileIndex));
+            }
+            finally
+            {
+                // The turn must always end, even if a repository implementation throws —
+                // otherwise the session would stay locked in Moving forever.
+                State = SessionState.Idle;
+                TurnEnded?.Invoke();
+            }
         }
 
         private void RequireState(SessionState expected, string operation)

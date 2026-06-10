@@ -12,7 +12,13 @@ namespace JokerGO.Core
 
         public static RollValidation Validate(IReadOnlyList<int> values)
         {
-            if (values == null || values.Count < MinDiceCount)
+            if (values == null)
+            {
+                // A null list is a programming error, not user input — fail loudly.
+                throw new System.ArgumentNullException(nameof(values));
+            }
+
+            if (values.Count < MinDiceCount)
             {
                 return RollValidation.Fail("Enter a value for at least one die.");
             }

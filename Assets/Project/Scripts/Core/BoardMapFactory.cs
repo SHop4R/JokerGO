@@ -12,7 +12,7 @@ namespace JokerGO.Core
         {
             if (dto?.tiles == null)
             {
-                throw new MapValidationException("Map file has no 'tiles' array.");
+                throw new MapValidationException("Map file is missing a 'tiles' array (check the JSON structure).");
             }
 
             var tiles = new List<MapTile>(dto.tiles.Count);

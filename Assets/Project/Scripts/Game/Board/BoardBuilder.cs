@@ -22,6 +22,15 @@ namespace JokerGO.Game.Board
             }
         }
 
-        public Vector3 TokenPositionOn(int tileIndex) => tileViews[tileIndex].TokenAnchor;
+        public Vector3 TokenPositionOn(int tileIndex)
+        {
+            if (tileIndex < 0 || tileIndex >= tileViews.Count)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(tileIndex), tileIndex,
+                    $"Tile index must be within [0, {tileViews.Count - 1}]; was Build() called first?");
+            }
+
+            return tileViews[tileIndex].TokenAnchor;
+        }
     }
 }

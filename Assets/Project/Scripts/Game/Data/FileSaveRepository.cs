@@ -10,18 +10,22 @@ namespace JokerGO.Game.Data
     {
         public const string FileName = "save.json";
 
-        private readonly string path = Path.Combine(Application.persistentDataPath, FileName);
+        private string resolvedPath;
+
+        // Resolved lazily: Application.persistentDataPath is only safe to call
+        // on the main thread after engine startup, not in field initializers.
+        private string SavePath => resolvedPath ??= Path.Combine(Application.persistentDataPath, FileName);
 
         public SaveData Load()
         {
             try
             {
-                if (!File.Exists(path))
+                if (!File.Exists(SavePath))
                 {
                     return null;
                 }
 
-                return JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
+                return JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath));
             }
             catch (Exception e)
             {
@@ -34,7 +38,7 @@ namespace JokerGO.Game.Data
         {
             try
             {
-                File.WriteAllText(path, JsonUtility.ToJson(data, prettyPrint: true));
+                File.WriteAllText(SavePath, JsonUtility.ToJson(data, prettyPrint: true));
             }
             catch (Exception e)
             {
