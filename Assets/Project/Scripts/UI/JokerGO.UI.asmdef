@@ -1,11 +1,10 @@
 {
-    "name": "JokerGO.Game",
-    "rootNamespace": "JokerGO.Game",
+    "name": "JokerGO.UI",
+    "rootNamespace": "JokerGO.UI",
     "references": [
         "JokerGO.Core",
-        "JokerGO.UI",
-        "Unity.TextMeshPro",
-        "Unity.InputSystem"
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

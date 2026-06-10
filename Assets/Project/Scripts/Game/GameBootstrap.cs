@@ -3,7 +3,10 @@ using JokerGO.Core;
 using JokerGO.Game.Board;
 using JokerGO.Game.Data;
 using JokerGO.Game.Dice;
+using JokerGO.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 
 namespace JokerGO.Game
 {
@@ -59,9 +62,19 @@ namespace JokerGO.Game
             var flow = new GameObject("GameFlow");
             var diceDirector = flow.AddComponent<DiceRollDirector>();
             flow.AddComponent<GameFlowPresenter>().Initialize(Session, board, token, diceDirector);
-            flow.AddComponent<DebugRollInput>().Initialize(Session);
+
+            EnsureEventSystem();
+            GameHud.Create(Session);
 
             Debug.Log($"[JokerGO] Board ready: {map.TileCount} tiles. Player on tile {Session.CurrentTileIndex + 1}.");
+        }
+
+        private static void EnsureEventSystem()
+        {
+            if (FindFirstObjectByType<EventSystem>() == null)
+            {
+                new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            }
         }
 
         private static void AttachCamera(Transform target)
