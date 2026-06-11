@@ -8,7 +8,6 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 namespace JokerGO.Editor
@@ -22,7 +21,6 @@ namespace JokerGO.Editor
     {
         private const string ScenePath = "Assets/Project/Scenes/SampleScene.unity";
         private const string PrefabsFolder = "Assets/Project/Resources/Prefabs";
-        private const string PostFxProfilePath = "Assets/Project/Resources/PostFxProfile.asset";
 
         [MenuItem("JokerGO/Author Scene")]
         public static void Author()
@@ -70,7 +68,6 @@ namespace JokerGO.Editor
                 systems.GetComponentInChildren<GameFlowPresenter>(),
                 systems.GetComponentInChildren<DiceRollDirector>());
 
-            AuthorPostFx();
             AuthorAmbience();
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -162,39 +159,6 @@ namespace JokerGO.Editor
             eventSystem.AddComponent<InputSystemUIInputModule>();
 
             return root;
-        }
-
-        private static void AuthorPostFx()
-        {
-            AssetDatabase.DeleteAsset(PostFxProfilePath);
-            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, PostFxProfilePath);
-
-            var bloom = profile.Add<Bloom>();
-            bloom.intensity.Override(0.55f);
-            bloom.threshold.Override(1.05f);
-            bloom.scatter.Override(0.6f);
-
-            var vignette = profile.Add<Vignette>();
-            vignette.intensity.Override(0.24f);
-            vignette.smoothness.Override(0.42f);
-
-            var colors = profile.Add<ColorAdjustments>();
-            colors.saturation.Override(12f);
-            colors.contrast.Override(6f);
-            colors.postExposure.Override(0.15f);
-            EditorUtility.SetDirty(profile);
-
-            GameObject volumeGo = GameObject.Find("Global Volume");
-            if (volumeGo == null)
-            {
-                volumeGo = new GameObject("Global Volume");
-                volumeGo.AddComponent<Volume>().isGlobal = true;
-            }
-
-            Volume volume = volumeGo.GetComponent<Volume>();
-            volume.profile = profile;
-            EditorUtility.SetDirty(volume);
         }
 
         private static void AuthorAmbience()
