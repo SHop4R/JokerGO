@@ -31,12 +31,11 @@ namespace JokerGO.Editor
             Material dieBody = LitMaterial("DieBody", new Color(0.96f, 0.95f, 0.9f));
             Material particle = ParticleMaterial("ParticleUnlit");
 
+            // Dust/burst one-shots now come from Epic Toon FX (see SceneAuthoring).
             SavePrefab(BuildTree(trunk, leaves), "Tree");
             SavePrefab(BuildBush(leaves), "Bush");
             SavePrefab(BuildRock(rock), "Rock");
             SavePrefab(BuildGround(ground), "Ground");
-            SavePrefab(BuildDustParticle(particle), "DustParticle");
-            SavePrefab(BuildBurstParticle(particle), "BurstParticle");
             SavePrefab(BuildLeavesParticle(particle), "LeavesParticle");
             SavePrefab(BuildDie(dieBody), "Die");
 
@@ -98,15 +97,8 @@ namespace JokerGO.Editor
                 material = new Material(shader) { color = color };
                 AssetDatabase.CreateAsset(material, path);
             }
-            else
-            {
-                material.shader = shader;
-                material.color = color;
-                // Without dirtying, SaveAssets treats the loaded asset as clean
-                // and the change never reaches disk.
-                EditorUtility.SetDirty(material);
-            }
-
+            // Existing materials are hand-tuned in the inspector and never overwritten;
+            // delete a .mat and rerun the generator to restore its defaults.
             return material;
         }
 
@@ -163,47 +155,7 @@ namespace JokerGO.Editor
             return DieView.ConstructTemplate(body, new Color(0.15f, 0.12f, 0.08f), 0.55f);
         }
 
-        private static GameObject BuildDustParticle(Material material)
-        {
-            ParticleSystem system = ParticleBase("DustParticle", material,
-                new Color(0.92f, 0.87f, 0.74f, 0.65f));
 
-            ParticleSystem.MainModule main = system.main;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.7f, 1.6f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.16f, 0.34f);
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.5f);
-            main.gravityModifier = -0.05f;
-
-            ParticleSystem.ShapeModule shape = system.shape;
-            shape.shapeType = ParticleSystemShapeType.Hemisphere;
-            shape.radius = 0.18f;
-
-            SetSingleBurst(system, 14);
-
-            ParticleSystem.ColorOverLifetimeModule fade = system.colorOverLifetime;
-            fade.enabled = true;
-            fade.color = FadeOutGradient(new Color(0.92f, 0.87f, 0.74f, 0.65f));
-
-            return system.gameObject;
-        }
-
-        private static GameObject BuildBurstParticle(Material material)
-        {
-            ParticleSystem system = ParticleBase("BurstParticle", material, Color.white);
-
-            ParticleSystem.MainModule main = system.main;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(2.6f, 5.2f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.09f, 0.22f);
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f);
-            main.gravityModifier = 1.4f;
-
-            ParticleSystem.ShapeModule shape = system.shape;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.15f;
-
-            SetSingleBurst(system, 26);
-            return system.gameObject;
-        }
 
         private static GameObject BuildLeavesParticle(Material material)
         {

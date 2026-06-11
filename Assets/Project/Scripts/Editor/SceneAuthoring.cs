@@ -22,6 +22,12 @@ namespace JokerGO.Editor
         private const string ScenePath = "Assets/Project/Scenes/SampleScene.unity";
         private const string PrefabsFolder = "Assets/Project/Resources/Prefabs";
 
+        // Pooled one-shot effects come from Epic Toon FX (no scripts/audio in these).
+        private const string EtfxDustPath =
+            "Assets/Epic Toon FX/Prefabs/Environment/Dust/DustDirtyPoof.prefab";
+        private const string EtfxBurstPath =
+            "Assets/Epic Toon FX/Prefabs/Interactive/Stars/StarPoof.prefab";
+
         [MenuItem("JokerGO/Author Scene")]
         public static void Author()
         {
@@ -136,8 +142,8 @@ namespace JokerGO.Editor
             var pool = new GameObject("PoolManager").AddComponent<PoolManager>();
             pool.transform.SetParent(root.transform);
             pool.AuthorWire(
-                LoadPrefab("DustParticle").GetComponent<ParticleSystem>(),
-                LoadPrefab("BurstParticle").GetComponent<ParticleSystem>(),
+                AssetDatabase.LoadAssetAtPath<GameObject>(EtfxDustPath).GetComponent<ParticleSystem>(),
+                AssetDatabase.LoadAssetAtPath<GameObject>(EtfxBurstPath).GetComponent<ParticleSystem>(),
                 LoadPrefab("Die").GetComponent<DieView>());
 
             var flow = new GameObject("GameFlow");

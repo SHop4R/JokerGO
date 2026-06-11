@@ -125,8 +125,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45d8fd1b693d7488fbaf91d9377718a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dustPrefab: {fileID: 906867198546841507, guid: 1d943c2fc87b44b3aa56ff6a2bced404, type: 3}
-  burstPrefab: {fileID: 733632667942266094, guid: a417224c79d7b4b13b7d7e2a471ae074, type: 3}
+  dustPrefab: {fileID: 19826678, guid: c05e92eaee7a00844867e5edc8e0dde1, type: 3}
+  burstPrefab: {fileID: 19869282, guid: c51e34914bd18ff4880b11005334182e, type: 3}
   diePrefab: {fileID: 4867649997922572006, guid: 65c43746d5b644f4f8d792cde35d2306, type: 3}
 --- !u!1 &8139764658369095556
 GameObject:

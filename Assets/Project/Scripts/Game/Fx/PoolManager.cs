@@ -41,6 +41,7 @@ namespace JokerGO.Game.Fx
         public void PlayDust(Vector3 position, float scale = 1f)
         {
             ParticleSystem particle = _dustPool.Spawn(position);
+            EnsureHierarchyScaling(particle);
             particle.transform.localScale = Vector3.one * scale;
             particle.Play();
 
@@ -50,11 +51,30 @@ namespace JokerGO.Game.Fx
         public void PlayBurst(Vector3 position, Color color)
         {
             ParticleSystem particle = _burstPool.Spawn(position);
-            ParticleSystem.MainModule main = particle.main;
-            main.startColor = color;
+            EnsureHierarchyScaling(particle);
+
+            // Multi-system effects (Epic Toon FX) tint correctly when every child
+            // system gets the item color; their textures are authored near-white.
+            foreach (ParticleSystem system in particle.GetComponentsInChildren<ParticleSystem>())
+            {
+                ParticleSystem.MainModule main = system.main;
+                main.startColor = color;
+            }
+
             particle.Play();
 
             StartCoroutine(ReturnParticleAfterDuration(particle, () => _burstPool.Return(particle)));
+        }
+
+        /// <summary>Third-party effects ship with varied scaling modes; hierarchy scaling
+        /// lets one pooled prefab serve small and large moments via transform scale.</summary>
+        private static void EnsureHierarchyScaling(ParticleSystem root)
+        {
+            foreach (ParticleSystem system in root.GetComponentsInChildren<ParticleSystem>())
+            {
+                ParticleSystem.MainModule main = system.main;
+                main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+            }
         }
 
         public DieView SpawnDie(Vector3 position) => _dicePool.Spawn(position);
@@ -75,7 +95,14 @@ namespace JokerGO.Game.Fx
 
         private static IEnumerator ReturnParticleAfterDuration(ParticleSystem ps, Action onReturn)
         {
-            yield return WaitHelper.WaitForSeconds(ps.main.duration + ps.main.startLifetime.constantMax);
+            // Multi-system effects finish when their LONGEST child does.
+            float longest = 0f;
+            foreach (ParticleSystem system in ps.GetComponentsInChildren<ParticleSystem>())
+            {
+                longest = Mathf.Max(longest, system.main.duration + system.main.startLifetime.constantMax);
+            }
+
+            yield return WaitHelper.WaitForSeconds(longest);
             onReturn.Invoke();
         }
 
