@@ -8,7 +8,6 @@ namespace JokerGO.Game.Board
     public sealed class TileView : MonoBehaviour
     {
         private const float LabelLift = 0.02f;
-        private const float RewardLabelHeight = 1.1f;
         private const float RewardMarkerScale = 0.45f;
 
         public MapTile Tile { get; private set; }
@@ -55,17 +54,14 @@ namespace JokerGO.Game.Board
 
         private void BuildRewardMarker(ItemStack reward, BoardStyle style)
         {
+            // Just the colored fruit marker: amounts pop up as UI text on collection
+            // instead of cluttering the board permanently.
             var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             marker.name = "RewardMarker";
             marker.transform.SetParent(transform, false);
             marker.transform.localScale = Vector3.one * RewardMarkerScale;
             marker.transform.localPosition = new Vector3(0.5f, style.TileScale.y * 0.5f + RewardMarkerScale * 0.5f, 0.4f);
             marker.GetComponent<Renderer>().sharedMaterial = style.GetItemMaterial(reward.Type);
-
-            GameObject label = CreateLabel("RewardLabel", $"{reward.Amount} {reward.Type}",
-                style.NumberFontSize * 0.45f, style.GetItemMaterial(reward.Type).color);
-            label.transform.SetParent(transform, false);
-            label.transform.localPosition = Vector3.up * RewardLabelHeight;
         }
 
         /// <summary>Quick dip-and-spring of the block when something lands on the tile.</summary>

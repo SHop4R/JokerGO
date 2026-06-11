@@ -16,6 +16,7 @@ namespace JokerGO.UI
         private TileLogView tileLog;
         private CollectFlightLayer flightLayer;
         private DiceTotalView diceTotal;
+        private RewardPopupView rewardPopup;
         private Inventory pendingInventory;
 
         public static GameHud Create(GameSession session)
@@ -29,6 +30,7 @@ namespace JokerGO.UI
             hud.tileLog = TileLogView.Build(canvas.transform);
             hud.flightLayer = CollectFlightLayer.Build(canvas.transform);
             hud.diceTotal = DiceTotalView.Build(canvas.transform);
+            hud.rewardPopup = RewardPopupView.Build(canvas.transform);
 
             hud.inventoryPanel.Refresh(session.Inventory);
             hud.dicePanel.RollRequested += hud.OnRollRequested;
@@ -88,9 +90,12 @@ namespace JokerGO.UI
             diceTotal.Show(total);
         }
 
-        /// <summary>Plays chips flying from a screen point to the matching counter.</summary>
+        /// <summary>Plays the collect feedback: "+N Item" popup plus chips flying to the counter.</summary>
         public void ShowCollectFlight(Vector2 screenPosition, ItemStack gained)
         {
+            rewardPopup.Show(screenPosition, $"+{gained.Amount} {gained.Type}",
+                UiTheme.ItemColor(gained.Type));
+
             int chips = Mathf.Clamp(gained.Amount, 3, 7);
             flightLayer.Fly(screenPosition, gained.Type, inventoryPanel.CounterTarget(gained.Type),
                 chips, () =>
