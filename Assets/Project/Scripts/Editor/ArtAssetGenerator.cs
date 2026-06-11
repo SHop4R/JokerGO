@@ -54,30 +54,57 @@ namespace JokerGO.Editor
                 AssetDatabase.CreateFolder("Assets/Project/Resources", "Prefabs");
         }
 
+        private const string ToonShaderAssetPath =
+            "Assets/JMO Assets/Toony Colors Pro/Shaders/Hybrid 2/TCP2 Hybrid Shader 2.tcp2shader";
+        private const string ToonShaderName = "Toony Colors Pro 2/Hybrid Shader 2";
+
         private static Material LitMaterial(string assetName, Color color)
         {
-            return UpsertMaterial(assetName, "Universal Render Pipeline/Lit", color);
+            return UpsertMaterial(assetName, FindToonShader(), color);
+        }
+
+        private static Shader FindToonShader()
+        {
+            // Scripted-importer shaders are more reliable to load by asset path
+            // than by Shader.Find; fall back to name lookup just in case.
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(ToonShaderAssetPath);
+            if (shader == null)
+            {
+                shader = Shader.Find(ToonShaderName);
+            }
+
+            if (shader == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Toony Colors Pro 2 Hybrid Shader 2 not found; is the package imported?");
+            }
+
+            return shader;
         }
 
         private static Material ParticleMaterial(string assetName)
         {
-            return UpsertMaterial(assetName, "Universal Render Pipeline/Particles/Unlit", Color.white);
+            return UpsertMaterial(assetName,
+                Shader.Find("Universal Render Pipeline/Particles/Unlit"), Color.white);
         }
 
-        private static Material UpsertMaterial(string assetName, string shaderName, Color color)
+        private static Material UpsertMaterial(string assetName, Shader shader, Color color)
         {
             string path = $"{MaterialsFolder}/{assetName}.mat";
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
 
             if (material == null)
             {
-                material = new Material(Shader.Find(shaderName)) { color = color };
+                material = new Material(shader) { color = color };
                 AssetDatabase.CreateAsset(material, path);
             }
             else
             {
-                material.shader = Shader.Find(shaderName);
+                material.shader = shader;
                 material.color = color;
+                // Without dirtying, SaveAssets treats the loaded asset as clean
+                // and the change never reaches disk.
+                EditorUtility.SetDirty(material);
             }
 
             return material;

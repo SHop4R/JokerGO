@@ -103,6 +103,12 @@ namespace JokerGO.Game.Dice
                 AddFaceLabel(body.transform, value, faceColor);
             }
 
+            // QuickOutline keeps the dice readable against any backdrop.
+            var outline = body.AddComponent<Outline>();
+            outline.OutlineMode = Outline.Mode.OutlineAll;
+            outline.OutlineColor = faceColor;
+            outline.OutlineWidth = 4f;
+
             body.AddComponent<DieView>();
             return body;
         }

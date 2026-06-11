@@ -21,8 +21,12 @@ namespace JokerGO.Game
         private const float MinHopDuration = 0.06f;
         private const int HopAccelStartSteps = 8;
         private const int HopAccelMaxSteps = 60;
-        private const float DiceTrayForwardOffset = 3.5f;
-        private const float MaxTrayLateralOffset = 1.2f;
+        private const float DiceTrayForwardOffset = 2.2f;
+        private const float DiceTraySideOffset = 3.4f;
+        // Ground plane top sits at -0.16 (see EnvironmentBuilder); dice are 0.55 cubes.
+        private const float DiceRestHeight = -0.16f + 0.275f;
+        private const float DiceTileClearance = 1.35f;
+        private const float DiceClusterSpacing = 0.8f;
         private const float TotalRevealSeconds = 0.9f;
         private const float CameraReturnBeat = 0.45f;
         private const float WrapVanishDuration = 0.16f;
@@ -70,17 +74,56 @@ namespace JokerGO.Game
 
         private void OnRollStarted(IReadOnlyList<int> values)
         {
-            // The tray sits ahead along the path's travel direction; dice are gone
-            // before the token hops through. Lateral drift is clamped so a wide
-            // dice row cannot slide off the portrait frame on steep bends.
-            Vector3 trayOffset = board.PathDirectionAt(session.CurrentTileIndex) * DiceTrayForwardOffset;
-            trayOffset.x = Mathf.Clamp(trayOffset.x, -MaxTrayLateralOffset, MaxTrayLateralOffset);
-            Vector3 trayCenter = board.TokenPositionOn(session.CurrentTileIndex) + trayOffset;
+            // Dice land on the grass BESIDE the path (never on tiles): pick the side
+            // of the travel direction with more clearance from the board, then drop
+            // an organic cluster of rest spots there.
+            Vector3 clusterCenter = PickDiceClusterCenter();
+            Vector3[] restPositions = DiceClusterLayout.Compute(values.Count, clusterCenter,
+                DiceClusterSpacing, board.TilePositions, DiceTileClearance);
 
-            // The dice camera glides down onto the tray while the dice tumble in.
-            cameraDirector.FocusDice(trayCenter);
-            dice.Show(values, trayCenter,
+            // The dice camera glides down onto the cluster while the dice tumble in.
+            cameraDirector.FocusDice(AverageOf(restPositions));
+            dice.Show(values, restPositions,
                 () => StartCoroutine(DiceRevealRoutine(values)), OnDieImpact);
+        }
+
+        private Vector3 PickDiceClusterCenter()
+        {
+            Vector3 tokenPosition = board.TokenPositionOn(session.CurrentTileIndex);
+            Vector3 direction = board.PathDirectionAt(session.CurrentTileIndex);
+            Vector3 side = Vector3.Cross(Vector3.up, direction).normalized;
+
+            Vector3 left = tokenPosition + direction * DiceTrayForwardOffset - side * DiceTraySideOffset;
+            Vector3 right = tokenPosition + direction * DiceTrayForwardOffset + side * DiceTraySideOffset;
+
+            Vector3 center = MinTileDistance(left) >= MinTileDistance(right) ? left : right;
+            center.y = DiceRestHeight;
+            return center;
+        }
+
+        private float MinTileDistance(Vector3 point)
+        {
+            float best = float.MaxValue;
+            IReadOnlyList<Vector3> tiles = board.TilePositions;
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                float dx = point.x - tiles[i].x;
+                float dz = point.z - tiles[i].z;
+                best = Mathf.Min(best, dx * dx + dz * dz);
+            }
+
+            return best;
+        }
+
+        private static Vector3 AverageOf(IReadOnlyList<Vector3> points)
+        {
+            Vector3 sum = Vector3.zero;
+            for (int i = 0; i < points.Count; i++)
+            {
+                sum += points[i];
+            }
+
+            return sum / points.Count;
         }
 
         /// <summary>

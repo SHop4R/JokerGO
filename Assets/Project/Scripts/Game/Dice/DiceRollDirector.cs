@@ -12,8 +12,6 @@ namespace JokerGO.Game.Dice
     /// </summary>
     public sealed class DiceRollDirector : MonoBehaviour
     {
-        private const int DicePerRow = 5;
-        private const float RestSpacing = 0.75f;
         private const float SpawnHeight = 2.4f;
         private const float TumbleDuration = 1.15f;
         private const float StaggerStep = 0.09f;
@@ -22,17 +20,22 @@ namespace JokerGO.Game.Dice
 
         private readonly List<DieView> activeDice = new List<DieView>();
 
-        /// <summary>Plays the tumble for the given values; calls onAllSettled once every die rests.</summary>
-        public void Show(IReadOnlyList<int> values, Vector3 trayCenter, Action onAllSettled,
-            Action<Vector3> onDieImpact = null)
+        /// <summary>Tumbles one die onto each rest position; calls onAllSettled once every die rests.</summary>
+        public void Show(IReadOnlyList<int> values, IReadOnlyList<Vector3> restPositions,
+            Action onAllSettled, Action<Vector3> onDieImpact = null)
         {
             if (values == null)
             {
                 throw new ArgumentNullException(nameof(values));
             }
 
+            if (restPositions == null || restPositions.Count != values.Count)
+            {
+                throw new ArgumentException("One rest position is required per die.", nameof(restPositions));
+            }
+
             DismissImmediately();
-            StartCoroutine(ShowRoutine(values, trayCenter, onAllSettled, onDieImpact));
+            StartCoroutine(ShowRoutine(values, restPositions, onAllSettled, onDieImpact));
         }
 
         /// <summary>Shrinks the settled dice away and returns them to the pool.</summary>
@@ -55,23 +58,15 @@ namespace JokerGO.Game.Dice
             PoolManager.Instance.ReturnDie(die);
         }
 
-        private IEnumerator ShowRoutine(IReadOnlyList<int> values, Vector3 trayCenter,
+        private IEnumerator ShowRoutine(IReadOnlyList<int> values, IReadOnlyList<Vector3> restPositions,
             Action onAllSettled, Action<Vector3> onDieImpact)
         {
-            int rows = Mathf.CeilToInt(values.Count / (float)DicePerRow);
             int remaining = values.Count;
 
             var pending = new List<Coroutine>(values.Count);
             for (int i = 0; i < values.Count; i++)
             {
-                int row = i / DicePerRow;
-                int column = i % DicePerRow;
-                int diceInRow = Mathf.Min(DicePerRow, values.Count - row * DicePerRow);
-
-                Vector3 rest = trayCenter
-                               + Vector3.right * ((column - (diceInRow - 1) * 0.5f) * RestSpacing)
-                               + Vector3.forward * ((row - (rows - 1) * 0.5f) * RestSpacing);
-
+                Vector3 rest = restPositions[i];
                 Vector3 spawn = rest
                                 + Vector3.up * SpawnHeight
                                 + new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 0f,
