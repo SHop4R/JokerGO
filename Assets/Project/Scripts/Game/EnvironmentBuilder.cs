@@ -6,6 +6,7 @@ namespace JokerGO.Game
     /// <summary>
     /// Procedural orchard dressing around the path: prefab trees, bushes and rocks
     /// scattered deterministically (and path-aware) so every run looks the same.
+    /// Lives in the scene with its prefab and ground references pre-assigned.
     /// </summary>
     public sealed class EnvironmentBuilder : MonoBehaviour
     {
@@ -16,22 +17,32 @@ namespace JokerGO.Game
         private const float PathClearance = 3.9f;
         private const float ScatterWidth = 11f;
 
-        private GameObject treePrefab;
-        private GameObject bushPrefab;
-        private GameObject rockPrefab;
+        [SerializeField] private GameObject treePrefab;
+        [SerializeField] private GameObject bushPrefab;
+        [SerializeField] private GameObject rockPrefab;
+        [SerializeField] private Transform ground;
+
         private IReadOnlyList<Vector3> path;
 
-        public static EnvironmentBuilder Build(IReadOnlyList<Vector3> tilePositions)
+        /// <summary>Sizes the ground to the path and scatters the props; called by the bootstrap.</summary>
+        public void Populate(IReadOnlyList<Vector3> tilePositions)
         {
-            var builder = new GameObject("Environment").AddComponent<EnvironmentBuilder>();
-            builder.path = tilePositions;
-            builder.treePrefab = Utils.PrefabLibrary.Load("Tree");
-            builder.bushPrefab = Utils.PrefabLibrary.Load("Bush");
-            builder.rockPrefab = Utils.PrefabLibrary.Load("Rock");
-            builder.CreateGround(builder.PathEndZ());
-            builder.Scatter(builder.PathEndZ());
-            builder.TintWorld();
-            return builder;
+            path = tilePositions;
+            float endZ = PathEndZ();
+
+            ground.localPosition = new Vector3(0f, -0.16f, endZ * 0.5f);
+            ground.localScale = new Vector3(4f, 1f, (endZ + 30f) / 10f);
+
+            Scatter(endZ);
+        }
+
+        /// <summary>Editor-time wiring of prop prefabs and the scene ground instance.</summary>
+        public void AuthorWire(GameObject tree, GameObject bush, GameObject rock, Transform groundInstance)
+        {
+            treePrefab = tree;
+            bushPrefab = bush;
+            rockPrefab = rock;
+            ground = groundInstance;
         }
 
         private float PathEndZ() => path.Count == 0 ? 0f : path[path.Count - 1].z;
@@ -52,14 +63,6 @@ namespace JokerGO.Game
             }
 
             return bestX;
-        }
-
-        private void CreateGround(float pathLength)
-        {
-            GameObject ground = Instantiate(Utils.PrefabLibrary.Load("Ground"), transform);
-            ground.name = "Ground";
-            ground.transform.localPosition = new Vector3(0f, -0.16f, pathLength * 0.5f);
-            ground.transform.localScale = new Vector3(4f, 1f, (pathLength + 30f) / 10f);
         }
 
         private void Scatter(float pathLength)
@@ -102,22 +105,6 @@ namespace JokerGO.Game
             prop.transform.position = position + Vector3.up * (size * yOffsetFactor);
             prop.transform.localScale = prefab.transform.localScale * size;
             prop.transform.localRotation = Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f);
-        }
-
-        private void TintWorld()
-        {
-            Camera camera = Camera.main;
-            if (camera != null)
-            {
-                camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.backgroundColor = new Color(0.62f, 0.8f, 0.92f);
-            }
-
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.7f, 0.83f, 0.9f);
-            RenderSettings.fogStartDistance = 18f;
-            RenderSettings.fogEndDistance = 46f;
         }
     }
 }

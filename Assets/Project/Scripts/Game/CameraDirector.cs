@@ -5,8 +5,9 @@ namespace JokerGO.Game
 {
     /// <summary>
     /// Cinemachine rig: a damped follow camera with a screen-space dead zone (no more
-    /// twitching while dice land), an impulse-based shake channel, and a second camera
-    /// used to glide home before the token's wrap-around sky drop.
+    /// twitching while dice land), an impulse-based shake channel, a dice close-up
+    /// camera, and a home camera used before the token's wrap-around sky drop.
+    /// The whole rig lives pre-configured in the scene as the CameraRig prefab.
     /// </summary>
     public sealed class CameraDirector : MonoBehaviour
     {
@@ -20,44 +21,20 @@ namespace JokerGO.Game
         private static readonly Vector2 DeadZoneSize = new Vector2(0.12f, 0.1f);
         private static readonly Vector3 AimTargetOffset = new Vector3(0f, 0.5f, 0f);
 
+        [SerializeField] private CinemachineCamera followCam;
+        [SerializeField] private CinemachineCamera homeCam;
+        [SerializeField] private CinemachineCamera diceCam;
+        [SerializeField] private Transform homeAnchor;
+        [SerializeField] private Transform diceAnchor;
+        [SerializeField] private CinemachineImpulseSource impulseSource;
+
         /// <summary>How long callers should wait for the home glide to finish.</summary>
         public float HomeBlendDuration => HomeBlendSeconds;
 
-        private CinemachineCamera followCam;
-        private CinemachineCamera homeCam;
-        private CinemachineCamera diceCam;
-        private Transform homeAnchor;
-        private Transform diceAnchor;
-        private CinemachineImpulseSource impulseSource;
-
-        public static CameraDirector Create(Transform followTarget)
+        /// <summary>Points the follow camera at the token (called once by the bootstrap).</summary>
+        public void SetFollowTarget(Transform target)
         {
-            var director = new GameObject("CameraDirector").AddComponent<CameraDirector>();
-
-            Camera camera = Camera.main;
-            if (camera != null && camera.GetComponent<CinemachineBrain>() == null)
-            {
-                CinemachineBrain brain = camera.gameObject.AddComponent<CinemachineBrain>();
-                brain.DefaultBlend = new CinemachineBlendDefinition(
-                    CinemachineBlendDefinition.Styles.EaseInOut, HomeBlendSeconds);
-            }
-
-            director.followCam = director.BuildComposedCamera("CM FollowCam", followTarget, 10);
-
-            director.homeAnchor = new GameObject("CM HomeAnchor").transform;
-            director.homeAnchor.SetParent(director.transform);
-            director.homeCam = director.BuildComposedCamera("CM HomeCam", director.homeAnchor, 0);
-
-            // Steeper, closer camera that frames the dice tray while they tumble.
-            director.diceAnchor = new GameObject("CM DiceAnchor").transform;
-            director.diceAnchor.SetParent(director.transform);
-            director.diceCam = director.BuildComposedCamera("CM DiceCam", director.diceAnchor, 0,
-                DicePitchDegrees, DiceCameraDistance);
-
-            director.impulseSource = director.gameObject.AddComponent<CinemachineImpulseSource>();
-            director.impulseSource.ImpulseDefinition.ImpulseDuration = 0.25f;
-
-            return director;
+            followCam.Follow = target;
         }
 
         /// <summary>Camera bump for dice impacts and landings; decays via the impulse listener.</summary>
@@ -92,15 +69,48 @@ namespace JokerGO.Game
             diceCam.Priority = 0;
         }
 
-        private CinemachineCamera BuildComposedCamera(string cameraName, Transform target, int priority,
-            float pitchDegrees = PitchDegrees, float cameraDistance = CameraDistance)
+        /// <summary>Editor-time construction of the full rig under the given root.</summary>
+        public static CameraDirector Author(GameObject rigRoot, Camera camera)
+        {
+            CinemachineBrain brain = camera.GetComponent<CinemachineBrain>();
+            if (brain == null)
+            {
+                brain = camera.gameObject.AddComponent<CinemachineBrain>();
+            }
+
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut, HomeBlendSeconds);
+
+            var director = rigRoot.AddComponent<CameraDirector>();
+            director.followCam = AuthorComposedCamera(rigRoot.transform, "CM FollowCam", 10,
+                PitchDegrees, CameraDistance);
+
+            director.homeAnchor = new GameObject("CM HomeAnchor").transform;
+            director.homeAnchor.SetParent(rigRoot.transform);
+            director.homeCam = AuthorComposedCamera(rigRoot.transform, "CM HomeCam", 0,
+                PitchDegrees, CameraDistance);
+            director.homeCam.Follow = director.homeAnchor;
+
+            director.diceAnchor = new GameObject("CM DiceAnchor").transform;
+            director.diceAnchor.SetParent(rigRoot.transform);
+            director.diceCam = AuthorComposedCamera(rigRoot.transform, "CM DiceCam", 0,
+                DicePitchDegrees, DiceCameraDistance);
+            director.diceCam.Follow = director.diceAnchor;
+
+            director.impulseSource = rigRoot.AddComponent<CinemachineImpulseSource>();
+            director.impulseSource.ImpulseDefinition.ImpulseDuration = 0.25f;
+
+            return director;
+        }
+
+        private static CinemachineCamera AuthorComposedCamera(Transform parent, string cameraName,
+            int priority, float pitchDegrees, float cameraDistance)
         {
             var go = new GameObject(cameraName);
-            go.transform.SetParent(transform);
+            go.transform.SetParent(parent);
             go.transform.rotation = Quaternion.Euler(pitchDegrees, 0f, 0f);
 
             var vcam = go.AddComponent<CinemachineCamera>();
-            vcam.Follow = target;
             vcam.Priority = priority;
 
             var composer = go.AddComponent<CinemachinePositionComposer>();

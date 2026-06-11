@@ -10,7 +10,8 @@ namespace JokerGO.UI
 {
     /// <summary>
     /// Top-left dice controls: count dropdown (1-20), one labeled value box per die,
-    /// Roll button, and shake/flash feedback for invalid input.
+    /// Roll button, and shake/flash feedback for invalid input. The static frame lives
+    /// in the HUD prefab; only the per-die rows are rebuilt at runtime.
     /// </summary>
     public sealed class DicePanelView : MonoBehaviour
     {
@@ -19,35 +20,26 @@ namespace JokerGO.UI
         private const float MaxScrollHeight = 460f;
         private const float ErrorVisibleSeconds = 2.6f;
 
-        /// <summary>Raised with parsed values when the player presses Roll with parseable input.</summary>
+        /// <summary>Raised with the final values (typed, or random for empty boxes) on Roll.</summary>
         public event Action<IReadOnlyList<int>> RollRequested;
+
+        [SerializeField] private RectTransform fieldsContent;
+        [SerializeField] private LayoutElement scrollSize;
+        [SerializeField] private TMP_Dropdown countDropdown;
+        [SerializeField] private Button rollButton;
+        [SerializeField] private TextMeshProUGUI errorLabel;
+        [SerializeField] private CanvasGroup interactivity;
 
         private readonly List<TMP_InputField> fields = new List<TMP_InputField>();
         private RectTransform panel;
-        private RectTransform fieldsContent;
-        private RectTransform scrollRect;
-        private TMP_Dropdown countDropdown;
-        private Button rollButton;
-        private TextMeshProUGUI errorLabel;
-        private CanvasGroup interactivity;
         private Coroutine feedbackRoutine;
 
-        public static DicePanelView Build(Transform canvasParent)
+        private void Awake()
         {
-            RectTransform panel = UiFactory.CreatePanel(canvasParent, "DicePanel", UiTheme.PanelBackground);
-            panel.anchorMin = new Vector2(0f, 1f);
-            panel.anchorMax = new Vector2(0f, 1f);
-            panel.pivot = new Vector2(0f, 1f);
-            panel.anchoredPosition = new Vector2(24f, -24f);
-            // Top-level rect: width must be set directly; the fitter only drives height.
-            panel.sizeDelta = new Vector2(PanelWidth, 0f);
-
-            var view = panel.gameObject.AddComponent<DicePanelView>();
-            view.panel = panel;
-            view.interactivity = panel.gameObject.AddComponent<CanvasGroup>();
-            view.BuildContent();
-            view.RebuildFields(2);
-            return view;
+            panel = (RectTransform)transform;
+            countDropdown.onValueChanged.AddListener(index => RebuildFields(index + DiceRules.MinDiceCount));
+            rollButton.onClick.AddListener(OnRollClicked);
+            RebuildFields(countDropdown.value + DiceRules.MinDiceCount);
         }
 
         public void SetInteractable(bool value)
@@ -64,66 +56,6 @@ namespace JokerGO.UI
             }
 
             feedbackRoutine = StartCoroutine(FeedbackRoutine(message));
-        }
-
-        private void BuildContent()
-        {
-            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(20, 20, 16, 20);
-            layout.spacing = 14f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandHeight = false;
-
-            var fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            TextMeshProUGUI header = UiFactory.CreateText(panel, "Header", "DICE",
-                UiTheme.HeaderFontSize, UiTheme.Accent, TextAlignmentOptions.Left);
-            header.gameObject.AddComponent<LayoutElement>().preferredHeight = 48f;
-
-            BuildCountRow();
-            BuildFieldsScroll();
-            BuildRollButton();
-            BuildErrorLabel();
-        }
-
-        private void BuildCountRow()
-        {
-            RectTransform row = CreateRow(panel, "CountRow");
-
-            TextMeshProUGUI label = UiFactory.CreateText(row, "Label", "Dice count",
-                UiTheme.LabelFontSize, UiTheme.TextPrimary, TextAlignmentOptions.MidlineLeft);
-            label.gameObject.AddComponent<LayoutElement>().preferredWidth = 170f;
-
-            countDropdown = UiFactory.CreateCountDropdown(row, "CountDropdown",
-                DiceRules.MinDiceCount, DiceRules.MaxDiceCount);
-            countDropdown.GetComponent<RectTransform>().gameObject
-                .AddComponent<LayoutElement>().flexibleWidth = 1f;
-            countDropdown.value = 1; // option index 1 == 2 dice
-            countDropdown.onValueChanged.AddListener(index => RebuildFields(index + DiceRules.MinDiceCount));
-        }
-
-        private void BuildFieldsScroll()
-        {
-            ScrollRect scroll = UiFactory.CreateVerticalScroll(panel, "Fields", out fieldsContent);
-            scrollRect = (RectTransform)scroll.transform;
-            scrollRect.gameObject.AddComponent<LayoutElement>();
-        }
-
-        private void BuildRollButton()
-        {
-            rollButton = UiFactory.CreateButton(panel, "RollButton", "ROLL");
-            rollButton.gameObject.AddComponent<LayoutElement>().preferredHeight = 84f;
-            rollButton.onClick.AddListener(OnRollClicked);
-        }
-
-        private void BuildErrorLabel()
-        {
-            errorLabel = UiFactory.CreateText(panel, "ErrorLabel", string.Empty,
-                UiTheme.LabelFontSize * 0.85f, UiTheme.Error, TextAlignmentOptions.Left);
-            errorLabel.textWrappingMode = TextWrappingModes.Normal;
-            errorLabel.gameObject.AddComponent<LayoutElement>().minHeight = 0f;
         }
 
         private void RebuildFields(int count)
@@ -149,8 +81,6 @@ namespace JokerGO.UI
                 TextMeshProUGUI label = UiFactory.CreateText(row, "Label", $"Die {i + 1}",
                     UiTheme.LabelFontSize, UiTheme.TextPrimary, TextAlignmentOptions.MidlineLeft);
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                // minWidth, not just preferred: the input field's large preferred width
-                // would otherwise squeeze the label to nothing.
                 LayoutElement labelElement = label.gameObject.AddComponent<LayoutElement>();
                 labelElement.minWidth = 140f;
                 labelElement.preferredWidth = 140f;
@@ -167,8 +97,7 @@ namespace JokerGO.UI
             }
 
             // The scroll area grows with rows up to a cap, then actually scrolls.
-            float desired = Mathf.Min(count * (RowHeight + 12f), MaxScrollHeight);
-            scrollRect.GetComponent<LayoutElement>().preferredHeight = desired;
+            scrollSize.preferredHeight = Mathf.Min(count * (RowHeight + 12f), MaxScrollHeight);
         }
 
         private void OnRollClicked()
@@ -248,6 +177,57 @@ namespace JokerGO.UI
             layout.childForceExpandWidth = false;
             layout.childAlignment = TextAnchor.MiddleLeft;
             return (RectTransform)row.transform;
+        }
+
+        /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
+        public static DicePanelView Author(Transform canvasParent)
+        {
+            RectTransform panel = UiFactory.CreatePanel(canvasParent, "DicePanel", UiTheme.PanelBackground);
+            panel.anchorMin = new Vector2(0f, 1f);
+            panel.anchorMax = new Vector2(0f, 1f);
+            panel.pivot = new Vector2(0f, 1f);
+            panel.anchoredPosition = new Vector2(24f, -24f);
+            panel.sizeDelta = new Vector2(PanelWidth, 0f);
+
+            var view = panel.gameObject.AddComponent<DicePanelView>();
+            view.interactivity = panel.gameObject.AddComponent<CanvasGroup>();
+
+            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(20, 20, 16, 20);
+            layout.spacing = 14f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+
+            panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit =
+                ContentSizeFitter.FitMode.PreferredSize;
+
+            TextMeshProUGUI header = UiFactory.CreateText(panel, "Header", "DICE",
+                UiTheme.HeaderFontSize, UiTheme.Accent, TextAlignmentOptions.Left);
+            header.gameObject.AddComponent<LayoutElement>().preferredHeight = 48f;
+
+            RectTransform countRow = CreateRow(panel, "CountRow");
+            TextMeshProUGUI countLabel = UiFactory.CreateText(countRow, "Label", "Dice count",
+                UiTheme.LabelFontSize, UiTheme.TextPrimary, TextAlignmentOptions.MidlineLeft);
+            countLabel.gameObject.AddComponent<LayoutElement>().preferredWidth = 170f;
+
+            view.countDropdown = UiFactory.CreateCountDropdown(countRow, "CountDropdown",
+                DiceRules.MinDiceCount, DiceRules.MaxDiceCount);
+            view.countDropdown.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            view.countDropdown.SetValueWithoutNotify(1); // option index 1 == 2 dice
+
+            ScrollRect scroll = UiFactory.CreateVerticalScroll(panel, "Fields", out view.fieldsContent);
+            view.scrollSize = scroll.gameObject.AddComponent<LayoutElement>();
+
+            view.rollButton = UiFactory.CreateButton(panel, "RollButton", "ROLL");
+            view.rollButton.gameObject.AddComponent<LayoutElement>().preferredHeight = 84f;
+
+            view.errorLabel = UiFactory.CreateText(panel, "ErrorLabel", string.Empty,
+                UiTheme.LabelFontSize * 0.85f, UiTheme.Error, TextAlignmentOptions.Left);
+            view.errorLabel.textWrappingMode = TextWrappingModes.Normal;
+            view.errorLabel.gameObject.AddComponent<LayoutElement>().minHeight = 0f;
+
+            return view;
         }
     }
 }

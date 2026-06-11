@@ -17,7 +17,8 @@ namespace JokerGO.UI
         private const float StaggerStep = 0.07f;
         private const float CurveSideways = 160f;
 
-        public static CollectFlightLayer Build(Transform canvasParent)
+        /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
+        public static CollectFlightLayer Author(Transform canvasParent)
         {
             var go = new GameObject("CollectFlight", typeof(RectTransform));
             go.transform.SetParent(canvasParent, false);

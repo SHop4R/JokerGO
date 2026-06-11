@@ -10,9 +10,15 @@ namespace JokerGO.Game.Fx
     /// <summary>
     /// Central pool owner: dust/burst particles and dice are spawned from pools and
     /// returned automatically, so gameplay never calls Instantiate/Destroy directly.
+    /// Lives pre-configured in the scene with its prefab references assigned.
     /// </summary>
     public sealed class PoolManager : MonoSingleton<PoolManager>
     {
+        [Header("Pooled Prefabs")]
+        [SerializeField] private ParticleSystem dustPrefab;
+        [SerializeField] private ParticleSystem burstPrefab;
+        [SerializeField] private DieView diePrefab;
+
         private Pool<ParticleSystem> _dustPool;
         private Pool<ParticleSystem> _burstPool;
         private Pool<DieView> _dicePool;
@@ -21,8 +27,7 @@ namespace JokerGO.Game.Fx
         private Transform _burstParent;
         private Transform _diceParent;
 
-        /// <summary>Builds the pools from prefabs; called once by the bootstrap.</summary>
-        public void Initialize(ParticleSystem dustPrefab, ParticleSystem burstPrefab, DieView diePrefab)
+        private void Awake()
         {
             _dustParent = CreateParent("--- Dust Particles ---");
             _burstParent = CreateParent("--- Burst Particles ---");
@@ -58,6 +63,14 @@ namespace JokerGO.Game.Fx
         {
             die.transform.SetParent(_diceParent);
             _dicePool.Return(die);
+        }
+
+        /// <summary>Editor-time wiring of the pooled prefab references.</summary>
+        public void AuthorWire(ParticleSystem dust, ParticleSystem burst, DieView die)
+        {
+            dustPrefab = dust;
+            burstPrefab = burst;
+            diePrefab = die;
         }
 
         private static IEnumerator ReturnParticleAfterDuration(ParticleSystem ps, Action onReturn)

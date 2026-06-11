@@ -3,7 +3,11 @@
     "rootNamespace": "JokerGO.Editor",
     "references": [
         "JokerGO.Core",
-        "JokerGO.Game"
+        "JokerGO.Game",
+        "JokerGO.UI",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"

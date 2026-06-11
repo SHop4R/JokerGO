@@ -3,24 +3,27 @@ using JokerGO.Core;
 using JokerGO.Game.Board;
 using JokerGO.Game.Data;
 using JokerGO.Game.Dice;
-using JokerGO.Game.Fx;
-using JokerGO.Game.Utils;
 using JokerGO.UI;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
 
 namespace JokerGO.Game
 {
     /// <summary>
-    /// Composition root: loads data, builds the domain session and all presentation
-    /// objects in code, so the scene only needs this one component.
+    /// Composition root: loads data, builds the domain session and wires the
+    /// pre-authored scene objects (camera rig, player, HUD, systems) together.
     /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
-        public GameSession Session { get; private set; }
+        [Header("Scene References")]
+        [SerializeField] private GameHud hud;
+        [SerializeField] private PlayerTokenView token;
+        [SerializeField] private CameraDirector cameraDirector;
+        [SerializeField] private BoardBuilder board;
+        [SerializeField] private EnvironmentBuilder environment;
+        [SerializeField] private GameFlowPresenter presenter;
+        [SerializeField] private DiceRollDirector diceDirector;
 
-        private BoardStyle boardStyle;
+        public GameSession Session { get; private set; }
 
         private void Start()
         {
@@ -44,6 +47,8 @@ namespace JokerGO.Game
 
         private void Initialize()
         {
+            RequireSceneReferences();
+
             IMapSource mapSource = new JsonMapSource();
             ISaveRepository saveRepository = new FileSaveRepository();
 
@@ -51,55 +56,50 @@ namespace JokerGO.Game
             (Inventory inventory, int startTile) = SaveDataMapper.FromSaveData(saveRepository.Load(), map.TileCount);
             Session = new GameSession(map, saveRepository, inventory, startTile);
 
-            boardStyle = BoardStyle.CreateDefault();
-            var board = new GameObject("Board").AddComponent<BoardBuilder>();
-            board.Build(map, boardStyle);
+            BoardStyle style = BoardStyle.CreateDefault();
+            board.Build(map, style);
+            token.PlaceAt(board.TokenPositionOn(startTile));
+            cameraDirector.SetFollowTarget(token.transform);
 
-            PlayerTokenView token = PlayerTokenView.Create(
-                board.TokenPositionOn(startTile), boardStyle.GetItemMaterial(ItemType.Strawberry));
-
-            CameraDirector cameraDirector = CameraDirector.Create(token.transform);
-
-            EnsureEventSystem();
-            GameHud hud = GameHud.Create(Session);
-
-            PoolManager.Instance.Initialize(
-                PrefabLibrary.LoadComponent<ParticleSystem>("DustParticle"),
-                PrefabLibrary.LoadComponent<ParticleSystem>("BurstParticle"),
-                PrefabLibrary.LoadComponent<DieView>("Die"));
-
-            var flow = new GameObject("GameFlow");
-            var diceDirector = flow.AddComponent<DiceRollDirector>();
-            flow.AddComponent<GameFlowPresenter>().Initialize(
-                Session, board, token, diceDirector, cameraDirector, hud, Camera.main);
-
-            EnvironmentBuilder.Build(board.TilePositions);
-            PostFxBuilder.Apply();
-            CreateAmbientLeaves();
+            hud.Initialize(Session);
+            presenter.Initialize(Session, board, token, diceDirector, cameraDirector, hud, Camera.main);
+            environment.Populate(board.TilePositions);
 
             Debug.Log($"[JokerGO] Board ready: {map.TileCount} tiles. Player on tile {Session.CurrentTileIndex + 1}.");
         }
 
-        private static void CreateAmbientLeaves()
+        private void RequireSceneReferences()
         {
-            Camera camera = Camera.main;
-            if (camera == null)
-            {
-                return;
-            }
-
-            GameObject leaves = Instantiate(PrefabLibrary.Load("LeavesParticle"), camera.transform);
-            leaves.transform.localPosition = new Vector3(0f, 6f, 4f);
-            leaves.GetComponent<ParticleSystem>().Play();
+            Require(hud, nameof(hud));
+            Require(token, nameof(token));
+            Require(cameraDirector, nameof(cameraDirector));
+            Require(board, nameof(board));
+            Require(environment, nameof(environment));
+            Require(presenter, nameof(presenter));
+            Require(diceDirector, nameof(diceDirector));
         }
 
-        private static void EnsureEventSystem()
+        private static void Require(UnityEngine.Object reference, string fieldName)
         {
-            if (FindFirstObjectByType<EventSystem>() == null)
+            if (reference == null)
             {
-                new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+                throw new InvalidOperationException(
+                    $"Scene reference '{fieldName}' is not assigned; run JokerGO > Author Scene.");
             }
         }
 
+        /// <summary>Editor-time wiring of all scene references.</summary>
+        public void AuthorWire(GameHud gameHud, PlayerTokenView playerToken, CameraDirector director,
+            BoardBuilder boardBuilder, EnvironmentBuilder environmentBuilder,
+            GameFlowPresenter flowPresenter, DiceRollDirector dice)
+        {
+            hud = gameHud;
+            token = playerToken;
+            cameraDirector = director;
+            board = boardBuilder;
+            environment = environmentBuilder;
+            presenter = flowPresenter;
+            diceDirector = dice;
+        }
     }
 }

@@ -24,8 +24,9 @@ collect fruit into a persistent inventory.
 ## How to run
 
 1. Open the project with **Unity 6000.0.x** (developed on 6000.0.76f1).
-2. Open `Assets/Project/Scenes/SampleScene.unity` and press Play
-   (the scene self-assembles from a single `GameBootstrap` object).
+2. Open `Assets/Project/Scenes/SampleScene.unity` and press Play.
+   (The scene ships fully authored; `JokerGO > Author Scene` regenerates
+   all prefabs and rewires it from scratch if anything is ever missing.)
 3. Pick a dice count, type values (1-6 each) and press **ROLL**.
 
 To try a different board, edit `Assets/StreamingAssets/map.json`:
@@ -71,15 +72,15 @@ JokerGO.UI     uGUI HUD: input intents in, session events out
 - **Object pooling**: dice and one-shot particles come from a generic
   `Pool<T>`/`PoolManager` (over `UnityEngine.Pool`) instead of
   Instantiate/Destroy churn; pooled objects reset through `IPoolable`.
-- **Prefab + material assets** are generated once by an editor command
-  (`JokerGO > Generate Art Assets`) and loaded at runtime, so environment
-  props are single prefab instances rather than per-prop primitive assembly.
+- **Scene-authored composition**: every single-instance object (camera rig,
+  player token, HUD canvas, pool/flow managers, ground) lives pre-configured
+  in the scene as a prefab instance, generated and wired by one editor
+  command (`JokerGO > Author Scene`). Runtime never builds singletons with
+  AddComponent; only data-driven content spawns at runtime — board tiles,
+  environment scatter and pooled effects, all from prefabs.
 - **Cinemachine camera**: damped follow with a screen-space dead zone (no
   micro-twitch while dice land), impulse-based shake, and a second camera
   that glides home before the token's wrap-around sky drop.
-- **Everything else is built from code at runtime** — board, HUD, post
-  processing — so the scene stays a one-object composition and the whole game
-  is reviewable as C#.
 
 ## Juice
 

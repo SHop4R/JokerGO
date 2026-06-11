@@ -23,16 +23,15 @@ namespace JokerGO.Game
             baseScale = transform.localScale;
         }
 
-        public static PlayerTokenView Create(Vector3 tileAnchor, Material material)
+        /// <summary>Editor-time construction of the Player prefab.</summary>
+        public static GameObject Author(Material material)
         {
             var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "PlayerToken";
+            body.name = "Player";
             body.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
             body.GetComponent<Renderer>().sharedMaterial = material;
-
-            PlayerTokenView view = body.AddComponent<PlayerTokenView>();
-            view.PlaceAt(tileAnchor);
-            return view;
+            body.AddComponent<PlayerTokenView>();
+            return body;
         }
 
         public void PlaceAt(Vector3 tileAnchor)

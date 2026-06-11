@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using JokerGO.Core;
 using TMPro;
 using UnityEngine;
@@ -14,23 +13,8 @@ namespace JokerGO.UI
         private const float RowHeight = 64f;
         private const float ChipSize = 42f;
 
-        private readonly Dictionary<ItemType, TextMeshProUGUI> countLabels =
-            new Dictionary<ItemType, TextMeshProUGUI>();
-
-        public static InventoryPanelView Build(Transform canvasParent)
-        {
-            RectTransform panel = UiFactory.CreatePanel(canvasParent, "InventoryPanel", UiTheme.PanelBackground);
-            panel.anchorMin = new Vector2(1f, 1f);
-            panel.anchorMax = new Vector2(1f, 1f);
-            panel.pivot = new Vector2(1f, 1f);
-            panel.anchoredPosition = new Vector2(-24f, -24f);
-            // Top-level rect: width must be set directly; the fitter only drives height.
-            panel.sizeDelta = new Vector2(PanelWidth, 0f);
-
-            var view = panel.gameObject.AddComponent<InventoryPanelView>();
-            view.BuildContent(panel);
-            return view;
-        }
+        // Indexed by (int)ItemType; wired at author time, persisted in the prefab.
+        [SerializeField] private TextMeshProUGUI[] countLabels;
 
         public void Refresh(Inventory inventory)
         {
@@ -39,19 +23,19 @@ namespace JokerGO.UI
                 throw new ArgumentNullException(nameof(inventory));
             }
 
-            foreach (KeyValuePair<ItemType, TextMeshProUGUI> entry in countLabels)
+            for (int i = 0; i < countLabels.Length; i++)
             {
-                entry.Value.text = inventory.Get(entry.Key).ToString();
+                countLabels[i].text = inventory.Get((ItemType)i).ToString();
             }
         }
 
         /// <summary>Screen anchor that collect flights aim for.</summary>
-        public RectTransform CounterTarget(ItemType type) => countLabels[type].rectTransform;
+        public RectTransform CounterTarget(ItemType type) => countLabels[(int)type].rectTransform;
 
         /// <summary>Pops the counter when items arrive.</summary>
         public void Punch(ItemType type)
         {
-            StartCoroutine(PunchRoutine(countLabels[type].rectTransform));
+            StartCoroutine(PunchRoutine(countLabels[(int)type].rectTransform));
         }
 
         private System.Collections.IEnumerator PunchRoutine(RectTransform target)
@@ -70,8 +54,16 @@ namespace JokerGO.UI
             target.localScale = Vector3.one;
         }
 
-        private void BuildContent(RectTransform panel)
+        /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
+        public static InventoryPanelView Author(Transform canvasParent)
         {
+            RectTransform panel = UiFactory.CreatePanel(canvasParent, "InventoryPanel", UiTheme.PanelBackground);
+            panel.anchorMin = new Vector2(1f, 1f);
+            panel.anchorMax = new Vector2(1f, 1f);
+            panel.pivot = new Vector2(1f, 1f);
+            panel.anchoredPosition = new Vector2(-24f, -24f);
+            panel.sizeDelta = new Vector2(PanelWidth, 0f);
+
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(20, 20, 16, 20);
             layout.spacing = 10f;
@@ -86,13 +78,18 @@ namespace JokerGO.UI
                 UiTheme.HeaderFontSize, UiTheme.Accent, TextAlignmentOptions.Left);
             header.gameObject.AddComponent<LayoutElement>().preferredHeight = 48f;
 
-            foreach (ItemType type in (ItemType[])Enum.GetValues(typeof(ItemType)))
+            var view = panel.gameObject.AddComponent<InventoryPanelView>();
+            var types = (ItemType[])Enum.GetValues(typeof(ItemType));
+            view.countLabels = new TextMeshProUGUI[types.Length];
+            foreach (ItemType type in types)
             {
-                BuildRow(panel, type);
+                view.countLabels[(int)type] = AuthorRow(panel, type);
             }
+
+            return view;
         }
 
-        private void BuildRow(RectTransform panel, ItemType type)
+        private static TextMeshProUGUI AuthorRow(RectTransform panel, ItemType type)
         {
             var row = new GameObject($"{type}Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             row.transform.SetParent(panel, false);
@@ -120,8 +117,7 @@ namespace JokerGO.UI
             TextMeshProUGUI count = UiFactory.CreateText(row.transform, "Count", "0",
                 UiTheme.LabelFontSize * 1.15f, UiTheme.TextPrimary, TextAlignmentOptions.MidlineRight);
             count.gameObject.AddComponent<LayoutElement>().preferredWidth = 90f;
-
-            countLabels[type] = count;
+            return count;
         }
     }
 }

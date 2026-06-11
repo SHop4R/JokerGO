@@ -4,9 +4,11 @@ using UnityEngine;
 
 namespace JokerGO.Game.Board
 {
-    /// <summary>Instantiates tile views for a <see cref="BoardMap"/> along a winding serpentine path.</summary>
+    /// <summary>Spawns Tile prefab instances for a <see cref="BoardMap"/> along a winding serpentine path.</summary>
     public sealed class BoardBuilder : MonoBehaviour
     {
+        [SerializeField] private GameObject tilePrefab;
+
         private readonly List<TileView> tileViews = new List<TileView>();
         private Vector3[] positions;
 
@@ -22,10 +24,19 @@ namespace JokerGO.Game.Board
 
             for (int i = 0; i < map.TileCount; i++)
             {
-                TileView view = TileView.Create(map[i], positions[i], style);
-                view.transform.SetParent(transform, worldPositionStays: true);
+                GameObject tile = Instantiate(tilePrefab, positions[i], Quaternion.identity, transform);
+                tile.name = $"Tile {i + 1}";
+
+                var view = tile.GetComponent<TileView>();
+                view.Configure(map[i], style);
                 tileViews.Add(view);
             }
+        }
+
+        /// <summary>Editor-time wiring of the Tile prefab reference.</summary>
+        public void AuthorWire(GameObject prefab)
+        {
+            tilePrefab = prefab;
         }
 
         /// <summary>

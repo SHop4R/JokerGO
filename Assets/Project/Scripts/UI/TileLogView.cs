@@ -1,19 +1,24 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace JokerGO.UI
 {
-    /// <summary>Bottom strip showing the latest landing result ("Landed on tile 12 — +5 Apple!").</summary>
+    /// <summary>Bottom strip showing the latest landing result ("Landed on tile 12 - collected 5 Apple!").</summary>
     public sealed class TileLogView : MonoBehaviour
     {
         private const float Height = 72f;
         private const float BottomMargin = 28f;
         private const float WidthMargin = 48f;
 
-        private TextMeshProUGUI label;
+        [SerializeField] private TextMeshProUGUI label;
 
-        public static TileLogView Build(Transform canvasParent)
+        public void Show(string message)
+        {
+            label.text = message;
+        }
+
+        /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
+        public static TileLogView Author(Transform canvasParent)
         {
             RectTransform panel = UiFactory.CreatePanel(canvasParent, "TileLog", UiTheme.PanelBackground);
             panel.anchorMin = new Vector2(0f, 0f);
@@ -27,11 +32,6 @@ namespace JokerGO.UI
                 UiTheme.LogFontSize, UiTheme.TextPrimary, TextAlignmentOptions.Center);
             UiFactory.Stretch(view.label.rectTransform);
             return view;
-        }
-
-        public void Show(string message)
-        {
-            label.text = message;
         }
     }
 }

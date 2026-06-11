@@ -4,64 +4,42 @@ using UnityEngine;
 
 namespace JokerGO.Game.Board
 {
-    /// <summary>Gray-box visual for one tile: base block, tile number, optional reward marker.</summary>
+    /// <summary>
+    /// One board tile, instantiated from the Tile prefab and configured per map data:
+    /// number, alternating block material, optional reward marker.
+    /// </summary>
     public sealed class TileView : MonoBehaviour
     {
         private const float LabelLift = 0.02f;
         private const float RewardMarkerScale = 0.45f;
+
+        [SerializeField] private Transform block;
+        [SerializeField] private Renderer blockRenderer;
+        [SerializeField] private TextMeshPro numberLabel;
+        [SerializeField] private GameObject rewardMarker;
+        [SerializeField] private Renderer rewardMarkerRenderer;
 
         public MapTile Tile { get; private set; }
 
         /// <summary>Where a token should stand on this tile.</summary>
         public Vector3 TokenAnchor { get; private set; }
 
-        private Transform block;
         private Coroutine pressRoutine;
 
-        public static TileView Create(MapTile tile, Vector3 position, BoardStyle style)
+        /// <summary>Applies map data to a freshly spawned tile instance.</summary>
+        public void Configure(MapTile tile, BoardStyle style)
         {
-            var root = new GameObject($"Tile {tile.DisplayNumber}");
-            root.transform.position = position;
+            Tile = tile;
+            TokenAnchor = transform.position + Vector3.up * (style.TileScale.y * 0.5f);
 
-            TileView view = root.AddComponent<TileView>();
-            view.Tile = tile;
-            view.TokenAnchor = position + Vector3.up * (style.TileScale.y * 0.5f);
-            view.BuildVisuals(style);
-            return view;
-        }
+            numberLabel.text = tile.DisplayNumber.ToString();
+            blockRenderer.sharedMaterial = tile.Index % 2 == 0 ? style.TileMaterialA : style.TileMaterialB;
 
-        private void BuildVisuals(BoardStyle style)
-        {
-            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            blockGo.name = "Block";
-            blockGo.transform.SetParent(transform, false);
-            blockGo.transform.localScale = style.TileScale;
-            blockGo.GetComponent<Renderer>().sharedMaterial =
-                Tile.Index % 2 == 0 ? style.TileMaterialA : style.TileMaterialB;
-            block = blockGo.transform;
-
-            GameObject number = CreateLabel("Number", Tile.DisplayNumber.ToString(),
-                style.NumberFontSize, style.NumberColor);
-            number.transform.SetParent(transform, false);
-            number.transform.localPosition = Vector3.up * (style.TileScale.y * 0.5f + LabelLift);
-            number.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-
-            if (Tile.HasReward)
+            rewardMarker.SetActive(tile.HasReward);
+            if (tile.HasReward)
             {
-                BuildRewardMarker(Tile.Reward.Value, style);
+                rewardMarkerRenderer.sharedMaterial = style.GetItemMaterial(tile.Reward.Value.Type);
             }
-        }
-
-        private void BuildRewardMarker(ItemStack reward, BoardStyle style)
-        {
-            // Just the colored fruit marker: amounts pop up as UI text on collection
-            // instead of cluttering the board permanently.
-            var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            marker.name = "RewardMarker";
-            marker.transform.SetParent(transform, false);
-            marker.transform.localScale = Vector3.one * RewardMarkerScale;
-            marker.transform.localPosition = new Vector3(0.5f, style.TileScale.y * 0.5f + RewardMarkerScale * 0.5f, 0.4f);
-            marker.GetComponent<Renderer>().sharedMaterial = style.GetItemMaterial(reward.Type);
         }
 
         /// <summary>Quick dip-and-spring of the block when something lands on the tile.</summary>
@@ -103,16 +81,43 @@ namespace JokerGO.Game.Board
             pressRoutine = null;
         }
 
-        private static GameObject CreateLabel(string name, string text, float fontSize, Color color)
+        /// <summary>Editor-time construction of the Tile prefab hierarchy.</summary>
+        public static GameObject Author(BoardStyle style)
         {
-            var go = new GameObject(name);
-            var tmp = go.AddComponent<TextMeshPro>();
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.color = color;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.rectTransform.sizeDelta = new Vector2(2f, 1f);
-            return go;
+            var root = new GameObject("Tile");
+            var view = root.AddComponent<TileView>();
+
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockGo.name = "Block";
+            blockGo.transform.SetParent(root.transform, false);
+            blockGo.transform.localScale = style.TileScale;
+            view.block = blockGo.transform;
+            view.blockRenderer = blockGo.GetComponent<Renderer>();
+            view.blockRenderer.sharedMaterial = style.TileMaterialA;
+
+            var labelGo = new GameObject("Number");
+            labelGo.transform.SetParent(root.transform, false);
+            labelGo.transform.localPosition = Vector3.up * (style.TileScale.y * 0.5f + LabelLift);
+            labelGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+            view.numberLabel = labelGo.AddComponent<TextMeshPro>();
+            view.numberLabel.text = "0";
+            view.numberLabel.fontSize = style.NumberFontSize;
+            view.numberLabel.color = style.NumberColor;
+            view.numberLabel.alignment = TextAlignmentOptions.Center;
+            view.numberLabel.rectTransform.sizeDelta = new Vector2(2f, 1f);
+
+            var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            marker.name = "RewardMarker";
+            marker.transform.SetParent(root.transform, false);
+            marker.transform.localScale = Vector3.one * RewardMarkerScale;
+            marker.transform.localPosition = new Vector3(
+                0.5f, style.TileScale.y * 0.5f + RewardMarkerScale * 0.5f, 0.4f);
+            view.rewardMarker = marker;
+            view.rewardMarkerRenderer = marker.GetComponent<Renderer>();
+            marker.SetActive(false);
+
+            return root;
         }
     }
 }

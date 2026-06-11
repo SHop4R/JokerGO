@@ -17,10 +17,12 @@ namespace JokerGO.UI
         private const float FontSize = 64f;
         private const float Overshoot = 1.70158f;
 
-        private TextMeshProUGUI label;
+        [SerializeField] private TextMeshProUGUI label;
+
         private Coroutine playing;
 
-        public static RewardPopupView Build(Transform canvasParent)
+        /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
+        public static RewardPopupView Author(Transform canvasParent)
         {
             var go = new GameObject("RewardPopup", typeof(RectTransform));
             go.transform.SetParent(canvasParent, false);

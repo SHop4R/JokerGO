@@ -13,10 +13,12 @@ namespace JokerGO.UI
         private const float FontSize = 150f;
         private const float Overshoot = 1.70158f;
 
-        private TextMeshProUGUI label;
+        [SerializeField] private TextMeshProUGUI label;
+
         private Coroutine playing;
 
-        public static DiceTotalView Build(Transform canvasParent)
+        /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
+        public static DiceTotalView Author(Transform canvasParent)
         {
             var go = new GameObject("DiceTotal", typeof(RectTransform));
             go.transform.SetParent(canvasParent, false);
