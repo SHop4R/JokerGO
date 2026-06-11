@@ -21,8 +21,10 @@ namespace JokerGO.Game
         private const float MinHopDuration = 0.06f;
         private const int HopAccelStartSteps = 8;
         private const int HopAccelMaxSteps = 60;
-        private const float DiceTrayForwardOffset = 2.2f;
-        private const float MaxTrayLateralOffset = 0.9f;
+        private const float DiceTrayForwardOffset = 3.5f;
+        private const float MaxTrayLateralOffset = 1.2f;
+        private const float TotalRevealSeconds = 0.9f;
+        private const float CameraReturnBeat = 0.45f;
         private const float WrapVanishDuration = 0.16f;
         private const float WrapFallHeight = 7f;
         private const float WrapFallDuration = 0.5f;
@@ -74,7 +76,28 @@ namespace JokerGO.Game
             Vector3 trayOffset = board.PathDirectionAt(session.CurrentTileIndex) * DiceTrayForwardOffset;
             trayOffset.x = Mathf.Clamp(trayOffset.x, -MaxTrayLateralOffset, MaxTrayLateralOffset);
             Vector3 trayCenter = board.TokenPositionOn(session.CurrentTileIndex) + trayOffset;
-            dice.Show(values, trayCenter, session.NotifyDiceShown, OnDieImpact);
+
+            // The dice camera glides down onto the tray while the dice tumble in.
+            cameraDirector.FocusDice(trayCenter);
+            dice.Show(values, trayCenter,
+                () => StartCoroutine(DiceRevealRoutine(values)), OnDieImpact);
+        }
+
+        /// <summary>
+        /// Dice have settled under the close-up camera: pop the animated total,
+        /// hand the view back to the player, then let the move begin.
+        /// </summary>
+        private IEnumerator DiceRevealRoutine(IReadOnlyList<int> values)
+        {
+            if (hud != null)
+            {
+                hud.ShowDiceTotal(DiceRules.Sum(values));
+            }
+
+            yield return WaitHelper.WaitForSeconds(TotalRevealSeconds);
+            cameraDirector.ResumeFromDice();
+            yield return WaitHelper.WaitForSeconds(CameraReturnBeat);
+            session.NotifyDiceShown();
         }
 
         private void OnDieImpact(Vector3 position)
