@@ -4,6 +4,7 @@ using JokerGO.Game.Board;
 using JokerGO.Game.Data;
 using JokerGO.Game.Dice;
 using JokerGO.Game.Fx;
+using JokerGO.Game.Utils;
 using JokerGO.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,11 +21,6 @@ namespace JokerGO.Game
         public GameSession Session { get; private set; }
 
         private BoardStyle boardStyle;
-
-        private void OnDestroy()
-        {
-            boardStyle?.DestroyMaterials();
-        }
 
         private void Start()
         {
@@ -62,24 +58,39 @@ namespace JokerGO.Game
             PlayerTokenView token = PlayerTokenView.Create(
                 board.TokenPositionOn(startTile), boardStyle.GetItemMaterial(ItemType.Strawberry));
 
-            FollowCamera followCamera = AttachCamera(token.transform);
+            CameraDirector cameraDirector = CameraDirector.Create(token.transform);
 
             EnsureEventSystem();
             GameHud hud = GameHud.Create(Session);
 
+            PoolManager.Instance.Initialize(
+                PrefabLibrary.LoadComponent<ParticleSystem>("DustParticle"),
+                PrefabLibrary.LoadComponent<ParticleSystem>("BurstParticle"),
+                PrefabLibrary.LoadComponent<DieView>("Die"));
+
             var flow = new GameObject("GameFlow");
             var diceDirector = flow.AddComponent<DiceRollDirector>();
             flow.AddComponent<GameFlowPresenter>().Initialize(
-                Session, board, token, diceDirector, followCamera, hud, Camera.main);
+                Session, board, token, diceDirector, cameraDirector, hud, Camera.main);
 
             EnvironmentBuilder.Build(board.TilePositions);
             PostFxBuilder.Apply();
-            if (Camera.main != null)
-            {
-                ParticleFx.CreateAmbientLeaves(Camera.main.transform);
-            }
+            CreateAmbientLeaves();
 
             Debug.Log($"[JokerGO] Board ready: {map.TileCount} tiles. Player on tile {Session.CurrentTileIndex + 1}.");
+        }
+
+        private static void CreateAmbientLeaves()
+        {
+            Camera camera = Camera.main;
+            if (camera == null)
+            {
+                return;
+            }
+
+            GameObject leaves = Instantiate(PrefabLibrary.Load("LeavesParticle"), camera.transform);
+            leaves.transform.localPosition = new Vector3(0f, 6f, 4f);
+            leaves.GetComponent<ParticleSystem>().Play();
         }
 
         private static void EnsureEventSystem()
@@ -90,23 +101,5 @@ namespace JokerGO.Game
             }
         }
 
-        private static FollowCamera AttachCamera(Transform target)
-        {
-            Camera camera = Camera.main;
-            if (camera == null)
-            {
-                Debug.LogError("[JokerGO] No MainCamera in scene; cannot attach follow camera.");
-                return null;
-            }
-
-            var follow = camera.GetComponent<FollowCamera>();
-            if (follow == null)
-            {
-                follow = camera.gameObject.AddComponent<FollowCamera>();
-            }
-
-            follow.SetTarget(target, snap: true);
-            return follow;
-        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using JokerGO.Game.ObjectPool;
 using JokerGO.Game.Tweening;
 using TMPro;
 using UnityEngine;
@@ -6,28 +7,31 @@ using UnityEngine;
 namespace JokerGO.Game.Dice
 {
     /// <summary>
-    /// One die: a cube with numbered faces and a scripted tumble that always
+    /// One pooled die: a cube with numbered faces and a scripted tumble that always
     /// settles showing the requested value. No physics — fully deterministic.
     /// </summary>
-    public sealed class DieView : MonoBehaviour
+    public sealed class DieView : MonoBehaviour, IPoolable
     {
         private const float FaceLabelInset = 0.005f;
         private const float FlyPhase = 0.45f;
         private const float BouncePhase = 0.35f;
 
-        public static DieView Create(Material bodyMaterial, Color faceColor, float size)
+        private Vector3 templateScale;
+
+        private void Awake()
         {
-            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            body.name = "Die";
-            body.transform.localScale = Vector3.one * size;
-            body.GetComponent<Renderer>().sharedMaterial = bodyMaterial;
+            templateScale = transform.localScale;
+        }
 
-            for (int value = 1; value <= 6; value++)
-            {
-                AddFaceLabel(body.transform, value, faceColor);
-            }
+        public void OnSpawn()
+        {
+            transform.localScale = templateScale;
+            transform.rotation = Quaternion.identity;
+        }
 
-            return body.AddComponent<DieView>();
+        public void OnReturn()
+        {
+            StopAllCoroutines();
         }
 
         /// <summary>Arc to the rest position, bounce twice, settle with the value face-up.</summary>
@@ -77,10 +81,30 @@ namespace JokerGO.Game.Dice
             transform.rotation = finalRotation;
         }
 
+        /// <summary>Shrinks to nothing; the director returns the die to the pool afterwards.</summary>
         public IEnumerator ShrinkOut(float duration)
         {
             yield return Tween.ScaleTo(transform, Vector3.zero, duration, EaseType.EaseInQuad);
-            Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Builds the die hierarchy (cube body plus six numbered faces). Used by the
+        /// editor asset generator to produce the prefab the pool instantiates.
+        /// </summary>
+        public static GameObject ConstructTemplate(Material bodyMaterial, Color faceColor, float size)
+        {
+            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            body.name = "Die";
+            body.transform.localScale = Vector3.one * size;
+            body.GetComponent<Renderer>().sharedMaterial = bodyMaterial;
+
+            for (int value = 1; value <= 6; value++)
+            {
+                AddFaceLabel(body.transform, value, faceColor);
+            }
+
+            body.AddComponent<DieView>();
+            return body;
         }
 
         private static void AddFaceLabel(Transform body, int value, Color color)

@@ -156,7 +156,7 @@ namespace JokerGO.UI
                 labelElement.preferredWidth = 140f;
 
                 TMP_InputField field = UiFactory.CreateIntegerField(row, "Value",
-                    $"{DiceRules.MinValue}-{DiceRules.MaxValue}");
+                    $"{DiceRules.MinValue}-{DiceRules.MaxValue} / ?");
                 field.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
                 if (i < previous.Count)
                 {
@@ -176,10 +176,18 @@ namespace JokerGO.UI
             var values = new List<int>(fields.Count);
             for (int i = 0; i < fields.Count; i++)
             {
-                if (!int.TryParse(fields[i].text.Trim(), out int value))
+                string raw = fields[i].text.Trim();
+                if (string.IsNullOrEmpty(raw))
+                {
+                    // Empty box = let fate decide; typed values are used as-is.
+                    values.Add(UnityEngine.Random.Range(DiceRules.MinValue, DiceRules.MaxValue + 1));
+                    continue;
+                }
+
+                if (!int.TryParse(raw, out int value))
                 {
                     ShowError($"Die {i + 1} needs a value between " +
-                              $"{DiceRules.MinValue} and {DiceRules.MaxValue}.");
+                              $"{DiceRules.MinValue} and {DiceRules.MaxValue}, or empty for random.");
                     return;
                 }
 

@@ -15,7 +15,13 @@ namespace JokerGO.Game
         private const float IdleBobSpeed = 3.1f;
 
         private Vector3 restPosition;
+        private Vector3 baseScale;
         private bool moving;
+
+        private void Awake()
+        {
+            baseScale = transform.localScale;
+        }
 
         public static PlayerTokenView Create(Vector3 tileAnchor, Material material)
         {
@@ -46,6 +52,19 @@ namespace JokerGO.Game
                 yield return Tween.Squash(transform, LandSquashFactor, LandSquashDuration);
             }
 
+            moving = false;
+        }
+
+        /// <summary>Wrap-around entrance: drop from the sky onto a tile with a hard squash.</summary>
+        public IEnumerator FallFrom(Vector3 tileAnchor, float height, float duration)
+        {
+            moving = true;
+            transform.localScale = baseScale;
+            restPosition = StandingPosition(tileAnchor);
+            transform.position = restPosition + Vector3.up * height;
+
+            yield return Tween.MoveTo(transform, restPosition, duration, EaseType.EaseInQuad);
+            yield return Tween.Squash(transform, 0.68f, 0.12f);
             moving = false;
         }
 

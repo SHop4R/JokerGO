@@ -14,7 +14,7 @@ collect fruit into a persistent inventory.
 | Persistence | Inventory **and current tile** saved as JSON after every turn and restored on launch |
 | 3D map from JSON | `StreamingAssets/map.json` → validated domain model → board built at runtime; edit the file, get a different board |
 | Linear map | Straight 24-tile path (any length ≥ 2 works) with numbered tiles and visible rewards |
-| Dice input via textboxes | Labeled fields (top-left), integer-only, validated 1-6 with shake + flash + message feedback |
+| Dice input via textboxes | Labeled fields (top-left), integer-only, validated 1-6 with shake + flash + message feedback; an empty box rolls a random value |
 | 3D dice animation matching input | Scripted tumble: arc, spin, double bounce, settle **exactly** on the typed faces (6 is underlined so it can't read as 9) |
 | Movement + wrap-around | Token hops tile-by-tile (sum of dice), wraps past the last tile; rewards are never consumed |
 | Landing log | Bottom strip + console log of tile number and reward |
@@ -68,7 +68,16 @@ JokerGO.UI     uGUI HUD: input intents in, session events out
 - **In-house tweening** (`Easing` + composable coroutine `Tween` helpers) since
   third-party libraries like DOTween are not allowed; dice tumble, token hops,
   squash-and-stretch, UI shake and collect flights all run on it.
-- **Everything is built from code at runtime** — board, environment, HUD, post
+- **Object pooling**: dice and one-shot particles come from a generic
+  `Pool<T>`/`PoolManager` (over `UnityEngine.Pool`) instead of
+  Instantiate/Destroy churn; pooled objects reset through `IPoolable`.
+- **Prefab + material assets** are generated once by an editor command
+  (`JokerGO > Generate Art Assets`) and loaded at runtime, so environment
+  props are single prefab instances rather than per-prop primitive assembly.
+- **Cinemachine camera**: damped follow with a screen-space dead zone (no
+  micro-twitch while dice land), impulse-based shake, and a second camera
+  that glides home before the token's wrap-around sky drop.
+- **Everything else is built from code at runtime** — board, HUD, post
   processing — so the scene stays a one-object composition and the whole game
   is reviewable as C#.
 

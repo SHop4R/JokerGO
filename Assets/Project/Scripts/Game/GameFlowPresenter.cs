@@ -4,6 +4,8 @@ using JokerGO.Core;
 using JokerGO.Game.Board;
 using JokerGO.Game.Dice;
 using JokerGO.Game.Fx;
+using JokerGO.Game.Tweening;
+using JokerGO.Game.Utils;
 using JokerGO.UI;
 using UnityEngine;
 
@@ -21,24 +23,27 @@ namespace JokerGO.Game
         private const int HopAccelMaxSteps = 60;
         private const float DiceTrayForwardOffset = 2.2f;
         private const float MaxTrayLateralOffset = 0.9f;
+        private const float WrapVanishDuration = 0.16f;
+        private const float WrapFallHeight = 7f;
+        private const float WrapFallDuration = 0.5f;
 
         private GameSession session;
         private BoardBuilder board;
         private PlayerTokenView token;
         private DiceRollDirector dice;
-        private FollowCamera followCamera;
+        private CameraDirector cameraDirector;
         private GameHud hud;
         private Camera viewCamera;
 
         public void Initialize(GameSession gameSession, BoardBuilder boardBuilder,
             PlayerTokenView tokenView, DiceRollDirector diceDirector,
-            FollowCamera followCameraView, GameHud gameHud, Camera camera)
+            CameraDirector cameraDirectorView, GameHud gameHud, Camera camera)
         {
             session = gameSession;
             board = boardBuilder;
             token = tokenView;
             dice = diceDirector;
-            followCamera = followCameraView;
+            cameraDirector = cameraDirectorView;
             hud = gameHud;
             viewCamera = camera;
 
@@ -74,10 +79,10 @@ namespace JokerGO.Game
 
         private void OnDieImpact(Vector3 position)
         {
-            ParticleFx.Dust(position, 0.7f);
-            if (followCamera != null)
+            PoolManager.Instance.PlayDust(position, 0.7f);
+            if (cameraDirector != null)
             {
-                followCamera.AddShake(0.07f);
+                cameraDirector.Shake(0.07f);
             }
         }
 
@@ -98,10 +103,10 @@ namespace JokerGO.Game
         private void OnItemsCollected(Inventory inventory, ItemStack gained)
         {
             Vector3 collectPoint = token.transform.position + Vector3.up * 0.4f;
-            ParticleFx.Burst(collectPoint, UiTheme.ItemColor(gained.Type));
-            if (followCamera != null)
+            PoolManager.Instance.PlayBurst(collectPoint, UiTheme.ItemColor(gained.Type));
+            if (cameraDirector != null)
             {
-                followCamera.AddShake(0.05f);
+                cameraDirector.Shake(0.05f);
             }
 
             if (hud != null && viewCamera != null)
@@ -119,19 +124,49 @@ namespace JokerGO.Game
         {
             float hopDuration = HopDurationFor(path.Count);
             bool squashEveryHop = hopDuration > 0.18f;
+            int previousIndex = session.CurrentTileIndex;
 
             for (int i = 0; i < path.Count; i++)
             {
+                int tileIndex = path[i];
                 bool isLast = i == path.Count - 1;
-                yield return token.HopTo(
-                    board.TokenPositionOn(path[i]), hopDuration, squashEveryHop || isLast);
 
-                TileView landedView = board.TileViews[path[i]];
+                if (tileIndex < previousIndex)
+                {
+                    // Wrap-around: the index dropped, so the token passed the end of the line.
+                    yield return WrapEntryRoutine(tileIndex);
+                }
+                else
+                {
+                    yield return token.HopTo(
+                        board.TokenPositionOn(tileIndex), hopDuration, squashEveryHop || isLast);
+                }
+
+                TileView landedView = board.TileViews[tileIndex];
                 landedView.PressBounce();
-                ParticleFx.Dust(landedView.TokenAnchor, isLast ? 1.1f : 0.6f);
+                PoolManager.Instance.PlayDust(landedView.TokenAnchor, isLast ? 1.1f : 0.6f);
+                previousIndex = tileIndex;
             }
 
             session.NotifyMoveCompleted();
+        }
+
+        /// <summary>
+        /// Wrap-around entrance: the token pops away, the camera glides back to the
+        /// start of the path, then the token drops in from the sky and play continues.
+        /// </summary>
+        private IEnumerator WrapEntryRoutine(int tileIndex)
+        {
+            yield return Tween.ScaleTo(token.transform, Vector3.zero, WrapVanishDuration,
+                EaseType.EaseInQuad);
+
+            Vector3 anchor = board.TokenPositionOn(tileIndex);
+            cameraDirector.FocusPoint(anchor);
+            yield return WaitHelper.WaitForSeconds(cameraDirector.HomeBlendDuration);
+
+            yield return token.FallFrom(anchor, WrapFallHeight, WrapFallDuration);
+            cameraDirector.Shake(0.12f);
+            cameraDirector.ResumeFollow();
         }
 
         /// <summary>Long paths (many dice) hop faster so movement never drags.</summary>
