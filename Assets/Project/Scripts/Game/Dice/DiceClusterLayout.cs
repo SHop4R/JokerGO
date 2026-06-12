@@ -13,6 +13,8 @@ namespace JokerGO.Game.Dice
         private const float GoldenAngleDegrees = 137.508f;
         private const float JitterRadius = 0.14f;
         private const int RelocateAttempts = 10;
+        // Keeps relocated dice near the group, so the close-up camera always frames them.
+        private const float MaxClusterRadius = 2.6f;
 
         public static Vector3[] Compute(int count, Vector3 center, float spacing,
             IReadOnlyList<Vector3> tilePositions, float tileClearance)
@@ -26,8 +28,12 @@ namespace JokerGO.Game.Dice
 
                 for (int attempt = 0; attempt < RelocateAttempts && TooCloseToTiles(candidate, tilePositions, tileClearance); attempt++)
                 {
-                    // Slide further out along the spiral until the spot is clear of the path.
-                    candidate = SpiralPoint(center, i + count + attempt * 2, spacing, phase);
+                    // First rotate in place (same ring, new direction); only then slide
+                    // outward - and the ring radius is capped, so dice never fly off
+                    // beyond what the close-up camera can frame.
+                    candidate = attempt < RelocateAttempts / 2
+                        ? SpiralPoint(center, i, spacing, phase + (attempt + 1) * 73f)
+                        : SpiralPoint(center, i + count + attempt, spacing, phase);
                 }
 
                 positions[i] = candidate;
@@ -38,7 +44,7 @@ namespace JokerGO.Game.Dice
 
         private static Vector3 SpiralPoint(Vector3 center, int index, float spacing, float phaseDegrees)
         {
-            float radius = spacing * Mathf.Sqrt(index + 0.5f);
+            float radius = Mathf.Min(spacing * Mathf.Sqrt(index + 0.5f), MaxClusterRadius);
             float angle = (phaseDegrees + index * GoldenAngleDegrees) * Mathf.Deg2Rad;
 
             Vector2 jitter = Random.insideUnitCircle * JitterRadius;

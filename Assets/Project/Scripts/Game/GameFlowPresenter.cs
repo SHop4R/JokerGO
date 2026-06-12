@@ -81,8 +81,10 @@ namespace JokerGO.Game
             Vector3[] restPositions = DiceClusterLayout.Compute(values.Count, clusterCenter,
                 DiceClusterSpacing, board.TilePositions, DiceTileClearance);
 
-            // The dice camera glides down onto the cluster while the dice tumble in.
-            cameraDirector.FocusDice(AverageOf(restPositions));
+            // The dice camera glides down onto the cluster while the dice tumble in;
+            // wide clusters report their radius so the close-up zooms out to fit.
+            Vector3 clusterCentroid = AverageOf(restPositions);
+            cameraDirector.FocusDice(clusterCentroid, MaxDistanceFrom(clusterCentroid, restPositions));
             dice.Show(values, restPositions,
                 () => StartCoroutine(DiceRevealRoutine(values)), OnDieImpact);
         }
@@ -124,6 +126,17 @@ namespace JokerGO.Game
             }
 
             return sum / points.Count;
+        }
+
+        private static float MaxDistanceFrom(Vector3 center, IReadOnlyList<Vector3> points)
+        {
+            float max = 0f;
+            for (int i = 0; i < points.Count; i++)
+            {
+                max = Mathf.Max(max, Vector3.Distance(center, points[i]));
+            }
+
+            return max;
         }
 
         /// <summary>

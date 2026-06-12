@@ -16,14 +16,19 @@ namespace JokerGO.Game
         private const float HomeBlendSeconds = 1.0f;
         private const float DicePitchDegrees = 62f;
         private const float DiceCameraDistance = 5.5f;
+        // Wide clusters (tile-avoidance pushed a die outward) zoom out to stay framed.
+        private const float DiceFramedRadius = 0.9f;
+        private const float DiceDistancePerRadius = 1.8f;
 
         private static readonly Vector3 ComposerDamping = new Vector3(0.7f, 0.8f, 1.1f);
+        private static readonly Vector3 CinematicDamping = new Vector3(0.35f, 0.35f, 0.4f);
         private static readonly Vector2 DeadZoneSize = new Vector2(0.12f, 0.1f);
         private static readonly Vector3 AimTargetOffset = new Vector3(0f, 0.5f, 0f);
 
         [SerializeField] private CinemachineCamera followCam;
         [SerializeField] private CinemachineCamera homeCam;
         [SerializeField] private CinemachineCamera diceCam;
+        [SerializeField] private CinemachinePositionComposer diceComposer;
         [SerializeField] private Transform homeAnchor;
         [SerializeField] private Transform diceAnchor;
         [SerializeField] private CinemachineImpulseSource impulseSource;
@@ -46,7 +51,7 @@ namespace JokerGO.Game
         /// <summary>Glides the view to a world point (used before the wrap-around drop).</summary>
         public void FocusPoint(Vector3 position)
         {
-            homeAnchor.position = position;
+            WarpAnchor(homeCam, homeAnchor, position);
             homeCam.Priority = 20;
         }
 
@@ -56,10 +61,12 @@ namespace JokerGO.Game
             homeCam.Priority = 0;
         }
 
-        /// <summary>Zooms down onto the dice tray so the player sees the thrown values.</summary>
-        public void FocusDice(Vector3 trayCenter)
+        /// <summary>Zooms down onto the dice cluster so the player sees the thrown values.</summary>
+        public void FocusDice(Vector3 clusterCenter, float clusterRadius)
         {
-            diceAnchor.position = trayCenter;
+            WarpAnchor(diceCam, diceAnchor, clusterCenter);
+            diceComposer.CameraDistance = DiceCameraDistance
+                + Mathf.Max(0f, clusterRadius - DiceFramedRadius) * DiceDistancePerRadius;
             diceCam.Priority = 30;
         }
 
@@ -67,6 +74,18 @@ namespace JokerGO.Game
         public void ResumeFromDice()
         {
             diceCam.Priority = 0;
+        }
+
+        /// <summary>
+        /// Anchors teleport to a new spot every roll/wrap; without telling Cinemachine
+        /// about the warp, the standby camera damps across the whole map and the
+        /// activation blend rides that swing - the "weird camera move" on odd throws.
+        /// </summary>
+        private static void WarpAnchor(CinemachineCamera vcam, Transform anchor, Vector3 position)
+        {
+            Vector3 delta = position - anchor.position;
+            anchor.position = position;
+            vcam.OnTargetObjectWarped(anchor, delta);
         }
 
         /// <summary>Editor-time construction of the full rig under the given root.</summary>
@@ -83,19 +102,22 @@ namespace JokerGO.Game
 
             var director = rigRoot.AddComponent<CameraDirector>();
             director.followCam = AuthorComposedCamera(rigRoot.transform, "CM FollowCam", 10,
-                PitchDegrees, CameraDistance);
+                PitchDegrees, CameraDistance, useDeadZone: true, ComposerDamping);
 
+            // The cinematic cameras frame teleporting anchors: no dead zone (consistent
+            // composition every time) and tight damping (no lazy drift inside the blend).
             director.homeAnchor = new GameObject("CM HomeAnchor").transform;
             director.homeAnchor.SetParent(rigRoot.transform);
             director.homeCam = AuthorComposedCamera(rigRoot.transform, "CM HomeCam", 0,
-                PitchDegrees, CameraDistance);
+                PitchDegrees, CameraDistance, useDeadZone: false, CinematicDamping);
             director.homeCam.Follow = director.homeAnchor;
 
             director.diceAnchor = new GameObject("CM DiceAnchor").transform;
             director.diceAnchor.SetParent(rigRoot.transform);
             director.diceCam = AuthorComposedCamera(rigRoot.transform, "CM DiceCam", 0,
-                DicePitchDegrees, DiceCameraDistance);
+                DicePitchDegrees, DiceCameraDistance, useDeadZone: false, CinematicDamping);
             director.diceCam.Follow = director.diceAnchor;
+            director.diceComposer = director.diceCam.GetComponent<CinemachinePositionComposer>();
 
             director.impulseSource = rigRoot.AddComponent<CinemachineImpulseSource>();
             director.impulseSource.ImpulseDefinition.ImpulseDuration = 0.25f;
@@ -104,7 +126,7 @@ namespace JokerGO.Game
         }
 
         private static CinemachineCamera AuthorComposedCamera(Transform parent, string cameraName,
-            int priority, float pitchDegrees, float cameraDistance)
+            int priority, float pitchDegrees, float cameraDistance, bool useDeadZone, Vector3 damping)
         {
             var go = new GameObject(cameraName);
             go.transform.SetParent(parent);
@@ -115,10 +137,13 @@ namespace JokerGO.Game
 
             var composer = go.AddComponent<CinemachinePositionComposer>();
             composer.CameraDistance = cameraDistance;
-            composer.Damping = ComposerDamping;
+            composer.Damping = damping;
             composer.TargetOffset = AimTargetOffset;
-            composer.Composition.DeadZone.Enabled = true;
-            composer.Composition.DeadZone.Size = DeadZoneSize;
+            composer.Composition.DeadZone.Enabled = useDeadZone;
+            if (useDeadZone)
+            {
+                composer.Composition.DeadZone.Size = DeadZoneSize;
+            }
 
             go.AddComponent<CinemachineImpulseListener>();
             return vcam;
