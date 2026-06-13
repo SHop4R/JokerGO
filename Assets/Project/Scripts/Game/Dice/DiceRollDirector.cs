@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using JokerGO.Game.Fx;
+using JokerGO.Game.Utils;
 using UnityEngine;
 
 namespace JokerGO.Game.Dice
@@ -61,8 +62,6 @@ namespace JokerGO.Game.Dice
         private IEnumerator ShowRoutine(IReadOnlyList<int> values, IReadOnlyList<Vector3> restPositions,
             Action onAllSettled, Action<Vector3> onDieImpact)
         {
-            int remaining = values.Count;
-
             var pending = new List<Coroutine>(values.Count);
             for (int i = 0; i < values.Count; i++)
             {
@@ -76,10 +75,11 @@ namespace JokerGO.Game.Dice
                 activeDice.Add(die);
 
                 pending.Add(StartCoroutine(die.TumbleTo(rest, values[i], TumbleDuration, onDieImpact)));
-                remaining--;
-                if (remaining > 0)
+
+                bool isLastDie = i == values.Count - 1;
+                if (!isLastDie)
                 {
-                    yield return Utils.WaitHelper.WaitForSeconds(StaggerStep);
+                    yield return WaitHelper.WaitForSeconds(StaggerStep);
                 }
             }
 
@@ -88,7 +88,7 @@ namespace JokerGO.Game.Dice
                 yield return tumble;
             }
 
-            yield return Utils.WaitHelper.WaitForSeconds(SettledBeat);
+            yield return WaitHelper.WaitForSeconds(SettledBeat);
             onAllSettled?.Invoke();
         }
 

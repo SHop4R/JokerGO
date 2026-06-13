@@ -96,7 +96,6 @@ namespace JokerGO.UI
                 fields.Add(field);
             }
 
-            // The scroll area grows with rows up to a cap, then actually scrolls.
             scrollSize.preferredHeight = Mathf.Min(count * (RowHeight + 12f), MaxScrollHeight);
         }
 
@@ -108,7 +107,6 @@ namespace JokerGO.UI
                 string raw = fields[i].text.Trim();
                 if (string.IsNullOrEmpty(raw))
                 {
-                    // Empty box = let fate decide; typed values are used as-is.
                     values.Add(UnityEngine.Random.Range(DiceRules.MinValue, DiceRules.MaxValue + 1));
                     continue;
                 }
@@ -214,7 +212,7 @@ namespace JokerGO.UI
             view.countDropdown = UiFactory.CreateCountDropdown(countRow, "CountDropdown",
                 DiceRules.MinDiceCount, DiceRules.MaxDiceCount);
             view.countDropdown.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
-            view.countDropdown.SetValueWithoutNotify(1); // option index 1 == 2 dice
+            view.countDropdown.SetValueWithoutNotify(1);
 
             ScrollRect scroll = UiFactory.CreateVerticalScroll(panel, "Fields", out view.fieldsContent);
             view.scrollSize = scroll.gameObject.AddComponent<LayoutElement>();

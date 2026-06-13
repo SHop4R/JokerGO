@@ -39,19 +39,10 @@ namespace JokerGO.Game.ObjectPool
                 PreGenerate(stats.DefaultPoolSize);
         }
 
-        public T Spawn() => _pool.Get();
-
         public T Spawn(Vector3 position)
         {
             T obj = _pool.Get();
             obj.transform.position = position;
-            return obj;
-        }
-
-        public T Spawn(Vector3 position, Quaternion rotation)
-        {
-            T obj = _pool.Get();
-            obj.transform.SetPositionAndRotation(position, rotation);
             return obj;
         }
 

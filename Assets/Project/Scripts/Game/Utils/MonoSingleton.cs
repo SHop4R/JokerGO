@@ -8,10 +8,11 @@ namespace JokerGO.Game.Utils
     /// <typeparam name="T">The type of the singleton class.</typeparam>
     public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T>
     {
-        private static volatile T _instance;
+        private static T _instance;
 
         /// <summary>
-        /// Gets the singleton instance of the class. If the instance is not already created, it finds or creates it.
+        /// Returns the cached instance, otherwise finds one in the scene (including inactive
+        /// objects) and caches it, creating an empty host only as a last resort.
         /// </summary>
         public static T Instance
         {

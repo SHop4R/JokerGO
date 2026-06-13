@@ -53,8 +53,6 @@ namespace JokerGO.Game.Fx
             ParticleSystem particle = _burstPool.Spawn(position);
             EnsureHierarchyScaling(particle);
 
-            // Multi-system effects (Epic Toon FX) tint correctly when every child
-            // system gets the item color; their textures are authored near-white.
             foreach (ParticleSystem system in particle.GetComponentsInChildren<ParticleSystem>())
             {
                 ParticleSystem.MainModule main = system.main;
@@ -95,7 +93,6 @@ namespace JokerGO.Game.Fx
 
         private static IEnumerator ReturnParticleAfterDuration(ParticleSystem ps, Action onReturn)
         {
-            // Multi-system effects finish when their LONGEST child does.
             float longest = 0f;
             foreach (ParticleSystem system in ps.GetComponentsInChildren<ParticleSystem>())
             {

@@ -6,8 +6,8 @@ namespace JokerGO.Editor
 {
     /// <summary>
     /// One-click generation of the project's material and prefab assets
-    /// (environment props, pooled particles, the die) so runtime code only
-    /// loads ready assets instead of assembling primitives.
+    /// (environment props, the ambient leaves particle, the die) so runtime code
+    /// only loads ready assets instead of assembling primitives.
     /// </summary>
     public static class ArtAssetGenerator
     {
@@ -31,7 +31,6 @@ namespace JokerGO.Editor
             Material dieBody = LitMaterial("DieBody", new Color(0.96f, 0.95f, 0.9f));
             Material particle = ParticleMaterial("ParticleUnlit");
 
-            // Dust/burst one-shots now come from Epic Toon FX (see SceneAuthoring).
             SavePrefab(BuildTree(trunk, leaves), "Tree");
             SavePrefab(BuildBush(leaves), "Bush");
             SavePrefab(BuildRock(rock), "Rock");
@@ -64,8 +63,6 @@ namespace JokerGO.Editor
 
         private static Shader FindToonShader()
         {
-            // Scripted-importer shaders are more reliable to load by asset path
-            // than by Shader.Find; fall back to name lookup just in case.
             Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(ToonShaderAssetPath);
             if (shader == null)
             {
@@ -97,8 +94,6 @@ namespace JokerGO.Editor
                 material = new Material(shader) { color = color };
                 AssetDatabase.CreateAsset(material, path);
             }
-            // Existing materials are hand-tuned in the inspector and never overwritten;
-            // delete a .mat and rerun the generator to restore its defaults.
             return material;
         }
 
@@ -152,10 +147,8 @@ namespace JokerGO.Editor
 
         private static GameObject BuildDie(Material body)
         {
-            return DieView.ConstructTemplate(body, new Color(0.15f, 0.12f, 0.08f), 0.55f);
+            return DieView.ConstructTemplate(body, faceColor: new Color(0.15f, 0.12f, 0.08f), size: 0.55f);
         }
-
-
 
         private static GameObject BuildLeavesParticle(Material material)
         {
@@ -200,27 +193,10 @@ namespace JokerGO.Editor
             main.startColor = color;
             main.playOnAwake = false;
             main.loop = false;
-            // Hierarchy scaling lets PoolManager scale one prefab for small/large puffs.
             main.scalingMode = ParticleSystemScalingMode.Hierarchy;
 
             go.GetComponent<ParticleSystemRenderer>().sharedMaterial = material;
             return system;
-        }
-
-        private static void SetSingleBurst(ParticleSystem system, short count)
-        {
-            ParticleSystem.EmissionModule emission = system.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, count) });
-        }
-
-        private static Gradient FadeOutGradient(Color color)
-        {
-            var gradient = new Gradient();
-            gradient.SetKeys(
-                new[] { new GradientColorKey(color, 0f), new GradientColorKey(color, 1f) },
-                new[] { new GradientAlphaKey(color.a, 0f), new GradientAlphaKey(0f, 1f) });
-            return gradient;
         }
 
         private static GameObject Primitive(PrimitiveType type, Transform parent, Material material)
@@ -233,7 +209,6 @@ namespace JokerGO.Editor
 
             go.GetComponent<Renderer>().sharedMaterial = material;
 
-            // Decor needs no physics; strip the primitive's collider.
             Object.DestroyImmediate(go.GetComponent<Collider>());
             return go;
         }

@@ -4,25 +4,22 @@ using UnityEngine;
 namespace JokerGO.Game.Utils
 {
     /// <summary>
-    /// Provides cached yield instructions so coroutines do not allocate a new
-    /// <see cref="UnityEngine.WaitForSeconds"/> on every wait.
+    /// Caches <see cref="UnityEngine.WaitForSeconds"/> instances so repeated waits of
+    /// the same duration do not allocate a new yield object each time.
     /// </summary>
     public static class WaitHelper
     {
-        private static readonly Dictionary<float, WaitForSeconds> WaitDictionary = new();
-        private static WaitForEndOfFrame _waitForEndOfFrame;
-        private static WaitForFixedUpdate _waitForFixedUpdate;
-
-        public static WaitForEndOfFrame WaitForEndOfFrame => _waitForEndOfFrame ??= new();
-
-        public static WaitForFixedUpdate WaitForFixedUpdate => _waitForFixedUpdate ??= new();
+        private static readonly Dictionary<float, WaitForSeconds> WaitCache = new();
 
         public static WaitForSeconds WaitForSeconds(float seconds)
         {
-            if (!WaitDictionary.ContainsKey(seconds))
-                WaitDictionary.Add(seconds, new(seconds));
+            if (!WaitCache.TryGetValue(seconds, out WaitForSeconds wait))
+            {
+                wait = new WaitForSeconds(seconds);
+                WaitCache.Add(seconds, wait);
+            }
 
-            return WaitDictionary[seconds];
+            return wait;
         }
     }
 }

@@ -49,7 +49,6 @@ namespace JokerGO.Game.Tweening
 
             return Progress(duration, t =>
             {
-                // Down fast in the first 35%, recover with a slight spring after.
                 float blend = t < 0.35f
                     ? Easing.Evaluate(EaseType.EaseOutQuad, t / 0.35f)
                     : 1f - Easing.Evaluate(EaseType.EaseOutBack, (t - 0.35f) / 0.65f);

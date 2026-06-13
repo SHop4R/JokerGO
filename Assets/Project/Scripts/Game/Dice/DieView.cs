@@ -47,7 +47,6 @@ namespace JokerGO.Game.Dice
             float bounceDuration = duration * BouncePhase;
             float settleDuration = duration * (1f - FlyPhase - BouncePhase);
 
-            // Fly in on an arc while spinning freely.
             float elapsed = 0f;
             while (elapsed < flyDuration)
             {
@@ -61,7 +60,6 @@ namespace JokerGO.Game.Dice
 
             onFirstImpact?.Invoke(restPosition);
 
-            // Two shrinking bounces; the spin decays and starts blending toward the target face.
             Quaternion bounceStartRotation = transform.rotation;
             elapsed = 0f;
             while (elapsed < bounceDuration)
@@ -75,7 +73,6 @@ namespace JokerGO.Game.Dice
                 yield return null;
             }
 
-            // Settle: lock position, finish the rotation blend.
             yield return Tween.RotateTo(transform, finalRotation, settleDuration, EaseType.EaseOutBack);
             transform.position = restPosition;
             transform.rotation = finalRotation;
@@ -103,7 +100,6 @@ namespace JokerGO.Game.Dice
                 AddFaceLabel(body.transform, value, faceColor);
             }
 
-            // QuickOutline keeps the dice readable against any backdrop.
             var outline = body.AddComponent<Outline>();
             outline.OutlineMode = Outline.Mode.OutlineAll;
             outline.OutlineColor = faceColor;
@@ -121,12 +117,10 @@ namespace JokerGO.Game.Dice
             Vector3 normal = DieFaceLayout.NormalOf(value);
             go.transform.localPosition = normal * (0.5f + FaceLabelInset);
 
-            // TMP text reads correctly when its -Z axis matches the face normal.
             Vector3 up = Mathf.Abs(normal.y) > 0.5f ? Vector3.forward : Vector3.up;
             go.transform.localRotation = Quaternion.LookRotation(-normal, up);
 
             var tmp = go.AddComponent<TextMeshPro>();
-            // The 6 is underlined like on real dice, so a random yaw can't read as a 9.
             tmp.text = value == 6 ? "<u>6</u>" : value.ToString();
             tmp.fontSize = 5f;
             tmp.color = color;

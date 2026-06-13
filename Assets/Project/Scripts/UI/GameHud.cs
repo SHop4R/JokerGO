@@ -89,7 +89,6 @@ namespace JokerGO.UI
 
         private void OnTileLanded(MapTile tile)
         {
-            // Plain hyphen: the project font has no em dash glyph.
             tileLog.Show(tile.HasReward
                 ? $"Landed on tile {tile.DisplayNumber} - collected {tile.Reward.Value}!"
                 : $"Landed on tile {tile.DisplayNumber} - empty.");
@@ -97,8 +96,6 @@ namespace JokerGO.UI
 
         private void OnItemsCollected(Inventory inventory, ItemStack gained)
         {
-            // Refresh is deferred until the collect flight lands (see ShowCollectFlight);
-            // OnTurnEnded acts as the safety net if no flight was played.
             pendingInventory = inventory;
         }
 

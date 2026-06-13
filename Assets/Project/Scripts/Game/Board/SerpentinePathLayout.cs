@@ -3,9 +3,9 @@ using UnityEngine;
 namespace JokerGO.Game.Board
 {
     /// <summary>
-    /// Lays tiles along a winding serpentine (x = A·sin(2πz/λ)) with equal spacing
-    /// measured along the curve, so the board reads as a path rather than a ruler —
-    /// still topologically a line per the case rules, never a closed square.
+    /// Lays tiles along a winding serpentine (x = A·sin(2πz/λ)) with equal straight-line
+    /// (chord) spacing between consecutive tiles, so the board reads as a path rather than
+    /// a ruler — still topologically a line per the case rules, never a closed square.
     /// </summary>
     public static class SerpentinePathLayout
     {
@@ -39,15 +39,12 @@ namespace JokerGO.Game.Board
             {
                 Vector3 previous = positions[i - 1];
 
-                // March forward until the next point is one tile-spacing away (chord distance).
                 Vector3 candidate = previous;
                 while ((candidate - previous).sqrMagnitude < spacing * spacing)
                 {
                     float advanced = z + StepSize;
                     if (advanced == z)
                     {
-                        // float32 stops advancing around z ~ 2^18; a pathological tile count
-                        // in map.json must fail loudly instead of hanging the main thread.
                         throw new System.InvalidOperationException(
                             $"Path layout step underflow at tile {i}; the map is too long to lay out.");
                     }

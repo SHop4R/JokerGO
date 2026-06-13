@@ -23,7 +23,7 @@ namespace JokerGO.Core
 
         /// <summary>
         /// Restores state from a snapshot. A null snapshot yields a fresh start; a tile index
-        /// that no longer fits the map (the map may have changed) is clamped to the first tile.
+        /// that no longer fits the map (the map may have changed) resets to the first tile.
         /// Negative counts mean a corrupt file and throw, so callers can fall back cleanly.
         /// </summary>
         public static (Inventory Inventory, int CurrentTileIndex) FromSaveData(SaveData data, int tileCount)

@@ -74,7 +74,6 @@ namespace JokerGO.Game
                 return;
             }
 
-            // A gentle idle bob keeps the token feeling alive between turns.
             transform.position = restPosition
                                  + Vector3.up * (Mathf.Sin(Time.time * IdleBobSpeed) * IdleBobAmplitude);
         }

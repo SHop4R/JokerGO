@@ -5,8 +5,9 @@ using UnityEngine.UI;
 namespace JokerGO.UI
 {
     /// <summary>
-    /// Code-built uGUI controls (the whole HUD is constructed at runtime, like the board).
-    /// Uses TMP_DefaultControls for the fiddly composite controls (input field, dropdown).
+    /// Code-built uGUI controls used to author the HUD prefab and to build the per-die
+    /// rows at runtime. Uses TMP_DefaultControls for the fiddly composite controls
+    /// (input field, dropdown).
     /// </summary>
     public static class UiFactory
     {
@@ -99,7 +100,6 @@ namespace JokerGO.UI
             dropdown.itemText.color = UiTheme.FieldText;
             dropdown.itemText.fontSize = UiTheme.FieldFontSize * 0.85f;
 
-            // The default template is built for small fonts; give items room to breathe.
             var item = (RectTransform)dropdown.itemText.transform.parent;
             item.sizeDelta = new Vector2(item.sizeDelta.x, 64f);
             dropdown.template.sizeDelta = new Vector2(dropdown.template.sizeDelta.x, 440f);
@@ -124,8 +124,6 @@ namespace JokerGO.UI
             content.anchorMin = new Vector2(0f, 1f);
             content.anchorMax = new Vector2(1f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
-            // Default sizeDelta is (100, 100): without zeroing, the content would be
-            // 100px wider than the viewport and the mask would clip row edges.
             content.sizeDelta = Vector2.zero;
 
             var layout = contentGo.GetComponent<VerticalLayoutGroup>();

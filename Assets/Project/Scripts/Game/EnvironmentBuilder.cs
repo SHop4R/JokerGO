@@ -10,10 +10,10 @@ namespace JokerGO.Game
     /// </summary>
     public sealed class EnvironmentBuilder : MonoBehaviour
     {
+        /// <summary>World-space Y of the ground plane's top; props and dice rest relative to it.</summary>
+        public const float GroundTopY = -0.16f;
+
         private const int RandomSeed = 7;
-        // Clearance is measured along world X from the nearest tile's x; on steep bends the
-        // perpendicular distance shrinks (cos of the slope) and the nearest-tile snap adds
-        // up to ~0.6 of error, so this is deliberately generous to keep canopies off tiles.
         private const float PathClearance = 3.9f;
         private const float ScatterWidth = 11f;
 
@@ -30,7 +30,7 @@ namespace JokerGO.Game
             path = tilePositions;
             float endZ = PathEndZ();
 
-            ground.localPosition = new Vector3(0f, -0.16f, endZ * 0.5f);
+            ground.localPosition = new Vector3(0f, GroundTopY, endZ * 0.5f);
             ground.localScale = new Vector3(4f, 1f, (endZ + 30f) / 10f);
 
             Scatter(endZ);

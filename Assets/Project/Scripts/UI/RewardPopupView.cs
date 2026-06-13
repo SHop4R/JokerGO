@@ -52,7 +52,6 @@ namespace JokerGO.UI
         private IEnumerator PopRoutine(Vector2 screenPosition, string text, Color color)
         {
             var rect = (RectTransform)transform;
-            // In an overlay canvas, world position equals screen pixels.
             Vector3 start = new Vector3(screenPosition.x, screenPosition.y, 0f);
 
             label.text = text;

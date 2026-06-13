@@ -107,8 +107,6 @@ namespace JokerGO.Core
             }
             finally
             {
-                // The turn must always end, even if a repository implementation throws —
-                // otherwise the session would stay locked in Moving forever.
                 State = SessionState.Idle;
                 TurnEnded?.Invoke();
             }

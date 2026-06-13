@@ -23,8 +23,7 @@ namespace JokerGO.Game
         private const int HopAccelMaxSteps = 60;
         private const float DiceTrayForwardOffset = 2.2f;
         private const float DiceTraySideOffset = 3.4f;
-        // Ground plane top sits at -0.16 (see EnvironmentBuilder); dice are 0.55 cubes.
-        private const float DiceRestHeight = -0.16f + 0.275f;
+        private const float DiceRestHeight = EnvironmentBuilder.GroundTopY + 0.275f;
         private const float DiceTileClearance = 1.35f;
         private const float DiceClusterSpacing = 0.8f;
         private const float TotalRevealSeconds = 0.9f;
@@ -74,15 +73,10 @@ namespace JokerGO.Game
 
         private void OnRollStarted(IReadOnlyList<int> values)
         {
-            // Dice land on the grass BESIDE the path (never on tiles): pick the side
-            // of the travel direction with more clearance from the board, then drop
-            // an organic cluster of rest spots there.
             Vector3 clusterCenter = PickDiceClusterCenter();
             Vector3[] restPositions = DiceClusterLayout.Compute(values.Count, clusterCenter,
                 DiceClusterSpacing, board.TilePositions, DiceTileClearance);
 
-            // The dice camera glides down onto the cluster while the dice tumble in;
-            // wide clusters report their radius so the close-up zooms out to fit.
             Vector3 clusterCentroid = AverageOf(restPositions);
             cameraDirector.FocusDice(clusterCentroid, MaxDistanceFrom(clusterCentroid, restPositions));
             dice.Show(values, restPositions,
@@ -212,7 +206,6 @@ namespace JokerGO.Game
 
                 if (tileIndex < previousIndex)
                 {
-                    // Wrap-around: the index dropped, so the token passed the end of the line.
                     yield return WrapEntryRoutine(tileIndex);
                 }
                 else

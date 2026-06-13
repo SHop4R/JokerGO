@@ -14,7 +14,6 @@ namespace JokerGO.Core
         {
             if (values == null)
             {
-                // A null list is a programming error, not user input — fail loudly.
                 throw new System.ArgumentNullException(nameof(values));
             }
 

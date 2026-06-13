@@ -69,7 +69,6 @@ namespace JokerGO.UI
             var rect = (RectTransform)chip.transform;
             rect.sizeDelta = new Vector2(ChipSize, ChipSize);
 
-            // In an overlay canvas, world position equals screen pixels.
             Vector3 start = new Vector3(fromScreen.x, fromScreen.y, 0f)
                             + (Vector3)UnityEngine.Random.insideUnitCircle * 26f;
             Vector3 control = Vector3.Lerp(start, target.position, 0.5f)

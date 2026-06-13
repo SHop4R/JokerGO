@@ -34,8 +34,6 @@ namespace JokerGO.Game.Board
         {
             return new BoardStyle
             {
-                // Spacing/amplitude pairing matters: at the steepest slope (A*2pi/wavelength)
-                // the along-Z gap must stay above the 1.7 tile footprint or corners overlap.
                 TileSpacing = 2.25f,
                 PathAmplitude = 2.6f,
                 PathWavelength = 24f,

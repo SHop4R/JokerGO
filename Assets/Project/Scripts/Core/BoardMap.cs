@@ -11,7 +11,6 @@ namespace JokerGO.Core
         private readonly MapTile[] tiles;
 
         public int TileCount => tiles.Length;
-        public IReadOnlyList<MapTile> Tiles => tiles;
         public MapTile this[int index] => tiles[index];
 
         public BoardMap(IReadOnlyList<MapTile> source)

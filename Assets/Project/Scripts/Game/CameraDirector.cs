@@ -4,9 +4,9 @@ using UnityEngine;
 namespace JokerGO.Game
 {
     /// <summary>
-    /// Cinemachine rig: a damped follow camera with a screen-space dead zone (no more
-    /// twitching while dice land), an impulse-based shake channel, a dice close-up
-    /// camera, and a home camera used before the token's wrap-around sky drop.
+    /// Cinemachine rig: a damped follow camera with a screen-space dead zone (so it holds
+    /// steady while dice land), an impulse-based shake channel, a dice close-up camera,
+    /// and a home camera used before the token's wrap-around sky drop.
     /// The whole rig lives pre-configured in the scene as the CameraRig prefab.
     /// </summary>
     public sealed class CameraDirector : MonoBehaviour
@@ -16,7 +16,6 @@ namespace JokerGO.Game
         private const float HomeBlendSeconds = 1.0f;
         private const float DicePitchDegrees = 62f;
         private const float DiceCameraDistance = 5.5f;
-        // Wide clusters (tile-avoidance pushed a die outward) zoom out to stay framed.
         private const float DiceFramedRadius = 0.9f;
         private const float DiceDistancePerRadius = 1.8f;
 
@@ -104,8 +103,6 @@ namespace JokerGO.Game
             director.followCam = AuthorComposedCamera(rigRoot.transform, "CM FollowCam", 10,
                 PitchDegrees, CameraDistance, useDeadZone: true, ComposerDamping);
 
-            // The cinematic cameras frame teleporting anchors: no dead zone (consistent
-            // composition every time) and tight damping (no lazy drift inside the blend).
             director.homeAnchor = new GameObject("CM HomeAnchor").transform;
             director.homeAnchor.SetParent(rigRoot.transform);
             director.homeCam = AuthorComposedCamera(rigRoot.transform, "CM HomeCam", 0,

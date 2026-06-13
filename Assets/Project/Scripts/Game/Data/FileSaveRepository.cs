@@ -12,8 +12,6 @@ namespace JokerGO.Game.Data
 
         private string resolvedPath;
 
-        // Resolved lazily: Application.persistentDataPath is only safe to call
-        // on the main thread after engine startup, not in field initializers.
         private string SavePath => resolvedPath ??= Path.Combine(Application.persistentDataPath, FileName);
 
         public SaveData Load()

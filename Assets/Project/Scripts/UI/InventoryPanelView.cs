@@ -13,7 +13,6 @@ namespace JokerGO.UI
         private const float RowHeight = 64f;
         private const float ChipSize = 42f;
 
-        // Indexed by (int)ItemType; wired at author time, persisted in the prefab.
         [SerializeField] private TextMeshProUGUI[] countLabels;
 
         public void Refresh(Inventory inventory)

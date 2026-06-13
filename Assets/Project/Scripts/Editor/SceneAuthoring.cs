@@ -22,7 +22,6 @@ namespace JokerGO.Editor
         private const string ScenePath = "Assets/Project/Scenes/SampleScene.unity";
         private const string PrefabsFolder = "Assets/Project/Resources/Prefabs";
 
-        // Pooled one-shot effects come from Epic Toon FX (no scripts/audio in these).
         private const string EtfxDustPath =
             "Assets/Epic Toon FX/Prefabs/Environment/Dust/DustDirtyPoof.prefab";
         private const string EtfxBurstPath =
@@ -59,7 +58,6 @@ namespace JokerGO.Editor
                 LoadPrefab("Ground"), scene);
             ground.name = "Ground";
 
-            // Scene-instance wiring (cross-prefab references live as instance overrides).
             var environment = systems.GetComponentInChildren<EnvironmentBuilder>();
             environment.AuthorWire(LoadPrefab("Tree"), LoadPrefab("Bush"), LoadPrefab("Rock"),
                 ground.transform);
@@ -124,7 +122,6 @@ namespace JokerGO.Editor
             var urpData = cameraGo.AddComponent<UniversalAdditionalCameraData>();
             urpData.renderPostProcessing = true;
 
-            // Ambient leaves ride with the camera; playOnAwake so no code is needed.
             GameObject leaves = Object.Instantiate(LoadPrefab("LeavesParticle"), cameraGo.transform);
             leaves.name = "AmbientLeaves";
             leaves.transform.localPosition = new Vector3(0f, 6f, 4f);
