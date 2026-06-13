@@ -14,6 +14,8 @@ namespace JokerGO.Game
     /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
+        private const int TargetFrameRate = 60;
+
         [Header("Scene References")]
         [SerializeField] private GameHud hud;
         [SerializeField] private PlayerTokenView token;
@@ -24,6 +26,11 @@ namespace JokerGO.Game
         [SerializeField] private DiceRollDirector diceDirector;
 
         public GameSession Session { get; private set; }
+
+        private void Awake()
+        {
+            Application.targetFrameRate = TargetFrameRate;
+        }
 
         private void Start()
         {
