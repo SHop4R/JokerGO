@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace JokerGO.Editor.Project.Scripts.Editor
 {
@@ -23,47 +24,38 @@ namespace JokerGO.Editor.Project.Scripts.Editor
         private const string ScenePath = "Assets/Project/Scenes/SampleScene.unity";
         private const string PrefabsFolder = "Assets/Project/Resources/Prefabs";
 
-        private const string EtfxDustPath =
-            "Assets/Epic Toon FX/Prefabs/Environment/Dust/DustDirtyPoof.prefab";
-        private const string EtfxBurstPath =
-            "Assets/Epic Toon FX/Prefabs/Interactive/Stars/StarPoof.prefab";
+        private const string EtfxDustPath = "Assets/Epic Toon FX/Prefabs/Environment/Dust/DustDirtyPoof.prefab";
+        private const string EtfxBurstPath = "Assets/Epic Toon FX/Prefabs/Interactive/Stars/StarPoof.prefab";
 
         [MenuItem("JokerGO/Author Scene")]
         public static void Author()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
-            {
                 return;
-            }
 
-            ArtAssetGenerator.Generate();
-            var scene = EditorSceneManager.OpenScene(ScenePath);
+            Scene scene = EditorSceneManager.OpenScene(ScenePath);
 
-            RemoveAuthored("GameBootstrap", "CameraRig", "Player", "HUD", "Systems",
-                "Ground", "Main Camera", "EventSystem");
+            RemoveAuthored("GameBootstrap", "CameraRig", "Player", "HUD", "Systems", "Ground", "Main Camera", "EventSystem");
 
             BoardStyle style = BoardStyle.CreateDefault();
 
             GameObject tilePrefab = AuthorPrefab(TileView.Author(style), "Tile");
-            GameObject playerPrefab = AuthorPrefab(
-                PlayerTokenView.Author(style.GetItemMaterial(ItemType.Strawberry)), "Player");
+            GameObject playerPrefab = AuthorPrefab(PlayerTokenView.Author(style.GetItemMaterial(ItemType.Strawberry)), "Player");
             GameObject hudPrefab = AuthorPrefab(GameHud.Author().gameObject, "HUD");
             GameObject rigPrefab = AuthorPrefab(AuthorCameraRig(), "CameraRig");
             GameObject systemsPrefab = AuthorPrefab(AuthorSystems(tilePrefab), "Systems");
 
-            var player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab, scene);
-            var hud = (GameObject)PrefabUtility.InstantiatePrefab(hudPrefab, scene);
-            var rig = (GameObject)PrefabUtility.InstantiatePrefab(rigPrefab, scene);
-            var systems = (GameObject)PrefabUtility.InstantiatePrefab(systemsPrefab, scene);
-            var ground = (GameObject)PrefabUtility.InstantiatePrefab(
-                LoadPrefab("Ground"), scene);
+            GameObject player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab, scene);
+            GameObject hud = (GameObject)PrefabUtility.InstantiatePrefab(hudPrefab, scene);
+            GameObject rig = (GameObject)PrefabUtility.InstantiatePrefab(rigPrefab, scene);
+            GameObject systems = (GameObject)PrefabUtility.InstantiatePrefab(systemsPrefab, scene);
+            GameObject ground = (GameObject)PrefabUtility.InstantiatePrefab(LoadPrefab("Ground"), scene);
             ground.name = "Ground";
 
-            var environment = systems.GetComponentInChildren<EnvironmentBuilder>();
-            environment.AuthorWire(LoadPrefab("Tree"), LoadPrefab("Bush"), LoadPrefab("Rock"),
-                ground.transform);
+            EnvironmentBuilder environment = systems.GetComponentInChildren<EnvironmentBuilder>();
+            environment.AuthorWire(LoadPrefab("Tree"), LoadPrefab("Bush"), LoadPrefab("Rock"), ground.transform);
 
-            var bootstrap = new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
+            GameBootstrap bootstrap = new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
             bootstrap.AuthorWire(
                 hud.GetComponent<GameHud>(),
                 player.GetComponent<PlayerTokenView>(),
@@ -86,10 +78,9 @@ namespace JokerGO.Editor.Project.Scripts.Editor
             foreach (string objectName in names)
             {
                 GameObject existing = GameObject.Find(objectName);
-                if (existing != null)
-                {
+                
+                if (existing) 
                     Object.DestroyImmediate(existing);
-                }
             }
         }
 
@@ -108,24 +99,27 @@ namespace JokerGO.Editor.Project.Scripts.Editor
 
         private static GameObject AuthorCameraRig()
         {
-            var root = new GameObject("CameraRig");
+            GameObject root = new("CameraRig");
 
-            var cameraGo = new GameObject("Main Camera");
-            cameraGo.tag = "MainCamera";
+            GameObject cameraGo = new("Main Camera")
+            {
+                tag = "MainCamera"
+            };
+
             cameraGo.transform.SetParent(root.transform);
-            cameraGo.transform.position = new Vector3(0f, 7f, -7f);
+            cameraGo.transform.position = new(0f, 7f, -7f);
 
-            var camera = cameraGo.AddComponent<Camera>();
+            Camera camera = cameraGo.AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.62f, 0.8f, 0.92f);
+            camera.backgroundColor = new(0.62f, 0.8f, 0.92f);
             cameraGo.AddComponent<AudioListener>();
 
-            var urpData = cameraGo.AddComponent<UniversalAdditionalCameraData>();
+            UniversalAdditionalCameraData urpData = cameraGo.AddComponent<UniversalAdditionalCameraData>();
             urpData.renderPostProcessing = true;
 
             GameObject leaves = Object.Instantiate(LoadPrefab("LeavesParticle"), cameraGo.transform);
             leaves.name = "AmbientLeaves";
-            leaves.transform.localPosition = new Vector3(0f, 6f, 4f);
+            leaves.transform.localPosition = new(0f, 6f, 4f);
             ParticleSystem.MainModule leavesMain = leaves.GetComponent<ParticleSystem>().main;
             leavesMain.playOnAwake = true;
 
@@ -135,29 +129,29 @@ namespace JokerGO.Editor.Project.Scripts.Editor
 
         private static GameObject AuthorSystems(GameObject tilePrefab)
         {
-            var root = new GameObject("Systems");
+            GameObject root = new("Systems");
 
-            var pool = new GameObject("PoolManager").AddComponent<PoolManager>();
+            PoolManager pool = new GameObject("PoolManager").AddComponent<PoolManager>();
             pool.transform.SetParent(root.transform);
             pool.AuthorWire(
                 AssetDatabase.LoadAssetAtPath<GameObject>(EtfxDustPath).GetComponent<ParticleSystem>(),
                 AssetDatabase.LoadAssetAtPath<GameObject>(EtfxBurstPath).GetComponent<ParticleSystem>(),
                 LoadPrefab("Die").GetComponent<DieView>());
 
-            var flow = new GameObject("GameFlow");
+            GameObject flow = new("GameFlow");
             flow.transform.SetParent(root.transform);
             flow.AddComponent<DiceRollDirector>();
             flow.AddComponent<GameFlowPresenter>();
 
-            var board = new GameObject("Board").AddComponent<BoardBuilder>();
+            BoardBuilder board = new GameObject("Board").AddComponent<BoardBuilder>();
             board.transform.SetParent(root.transform);
             board.AuthorWire(tilePrefab);
 
-            var environment = new GameObject("Environment").AddComponent<EnvironmentBuilder>();
+            EnvironmentBuilder environment = new GameObject("Environment").AddComponent<EnvironmentBuilder>();
             environment.transform.SetParent(root.transform);
             environment.AuthorWire(LoadPrefab("Tree"), LoadPrefab("Bush"), LoadPrefab("Rock"), null);
 
-            var eventSystem = new GameObject("EventSystem");
+            GameObject eventSystem = new("EventSystem");
             eventSystem.transform.SetParent(root.transform);
             eventSystem.AddComponent<EventSystem>();
             eventSystem.AddComponent<InputSystemUIInputModule>();
@@ -169,7 +163,7 @@ namespace JokerGO.Editor.Project.Scripts.Editor
         {
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.7f, 0.83f, 0.9f);
+            RenderSettings.fogColor = new(0.7f, 0.83f, 0.9f);
             RenderSettings.fogStartDistance = 18f;
             RenderSettings.fogEndDistance = 46f;
         }

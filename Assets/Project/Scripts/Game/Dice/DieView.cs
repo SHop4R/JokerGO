@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using JokerGO.Pooling.Project.Scripts.Pooling;
 using JokerGO.Game.Project.Scripts.Game.Tweening;
-using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -14,7 +13,6 @@ namespace JokerGO.Game.Project.Scripts.Game.Dice
     /// </summary>
     public sealed class DieView : MonoBehaviour, IPoolable
     {
-        private const float FaceLabelInset = 0.005f;
         private const float FlyPhase = 0.45f;
         private const float BouncePhase = 0.35f;
 
@@ -83,50 +81,6 @@ namespace JokerGO.Game.Project.Scripts.Game.Dice
         public IEnumerator ShrinkOut(float duration)
         {
             yield return Tween.ScaleTo(transform, Vector3.zero, duration, EaseType.EaseInQuad);
-        }
-
-        /// <summary>
-        /// Builds the die hierarchy (cube body plus six numbered faces). Used by the
-        /// editor asset generator to produce the prefab the pool instantiates.
-        /// </summary>
-        public static GameObject ConstructTemplate(Material bodyMaterial, Color faceColor, float size)
-        {
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            body.name = "Die";
-            body.transform.localScale = Vector3.one * size;
-            body.GetComponent<Renderer>().sharedMaterial = bodyMaterial;
-
-            for (int value = 1; value <= 6; value++)
-            {
-                AddFaceLabel(body.transform, value, faceColor);
-            }
-
-            Outline outline = body.AddComponent<Outline>();
-            outline.OutlineMode = Outline.Mode.OutlineAll;
-            outline.OutlineColor = faceColor;
-            outline.OutlineWidth = 4f;
-
-            body.AddComponent<DieView>();
-            return body;
-        }
-
-        private static void AddFaceLabel(Transform body, int value, Color color)
-        {
-            GameObject go = new GameObject($"Face {value}");
-            go.transform.SetParent(body, false);
-
-            Vector3 normal = DieFaceLayout.NormalOf(value);
-            go.transform.localPosition = normal * (0.5f + FaceLabelInset);
-
-            Vector3 up = Mathf.Abs(normal.y) > 0.5f ? Vector3.forward : Vector3.up;
-            go.transform.localRotation = Quaternion.LookRotation(-normal, up);
-
-            TextMeshPro tmp = go.AddComponent<TextMeshPro>();
-            tmp.text = value == 6 ? "<u>6</u>" : value.ToString();
-            tmp.fontSize = 5f;
-            tmp.color = color;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.rectTransform.sizeDelta = new Vector2(1f, 1f);
         }
     }
 }
