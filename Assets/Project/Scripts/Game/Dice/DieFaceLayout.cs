@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace JokerGO.Game.Dice
+namespace JokerGO.Game.Project.Scripts.Game.Dice
 {
     /// <summary>
     /// Standard die face layout (opposite faces sum to 7) and the rotation math

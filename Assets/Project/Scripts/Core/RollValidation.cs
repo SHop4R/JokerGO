@@ -1,4 +1,4 @@
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Outcome of validating a dice roll request; the error is safe to show on screen.</summary>
     public readonly struct RollValidation

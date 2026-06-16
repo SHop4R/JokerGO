@@ -1,7 +1,7 @@
 using Unity.Cinemachine;
 using UnityEngine;
 
-namespace JokerGO.Game
+namespace JokerGO.Game.Project.Scripts.Game
 {
     /// <summary>
     /// Cinemachine rig: a damped follow camera with a screen-space dead zone (so it holds

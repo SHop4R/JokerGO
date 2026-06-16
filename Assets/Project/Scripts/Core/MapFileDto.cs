@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Raw shape of map.json before validation. Field names match the JSON keys.</summary>
     [Serializable]

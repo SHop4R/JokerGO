@@ -1,4 +1,4 @@
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>
     /// A single board tile. <see cref="Index"/> is zero-based;
@@ -6,8 +6,8 @@ namespace JokerGO.Core
     /// </summary>
     public readonly struct MapTile
     {
-        public int Index { get; }
-        public ItemStack? Reward { get; }
+        public int Index{ get; }
+        public ItemStack? Reward{ get; }
 
         public bool HasReward => Reward.HasValue;
         public int DisplayNumber => Index + 1;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace JokerGO.Game.Tweening
+namespace JokerGO.Game.Project.Scripts.Game.Tweening
 {
     public enum EaseType
     {

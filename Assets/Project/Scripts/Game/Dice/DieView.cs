@@ -1,10 +1,12 @@
+using System;
 using System.Collections;
-using JokerGO.Game.ObjectPool;
-using JokerGO.Game.Tweening;
+using JokerGO.Pooling.Project.Scripts.Pooling;
+using JokerGO.Game.Project.Scripts.Game.Tweening;
 using TMPro;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-namespace JokerGO.Game.Dice
+namespace JokerGO.Game.Project.Scripts.Game.Dice
 {
     /// <summary>
     /// One pooled die: a cube with numbered faces and a scripted tumble that always
@@ -16,16 +18,16 @@ namespace JokerGO.Game.Dice
         private const float FlyPhase = 0.45f;
         private const float BouncePhase = 0.35f;
 
-        private Vector3 templateScale;
+        private Vector3 _templateScale;
 
         private void Awake()
         {
-            templateScale = transform.localScale;
+            _templateScale = transform.localScale;
         }
 
         public void OnSpawn()
         {
-            transform.localScale = templateScale;
+            transform.localScale = _templateScale;
             transform.rotation = Quaternion.identity;
         }
 
@@ -35,8 +37,7 @@ namespace JokerGO.Game.Dice
         }
 
         /// <summary>Arc to the rest position, bounce twice, settle with the value face-up.</summary>
-        public IEnumerator TumbleTo(Vector3 restPosition, int value, float duration,
-            System.Action<Vector3> onFirstImpact = null)
+        public IEnumerator TumbleTo(Vector3 restPosition, int value, float duration, Action<Vector3> onFirstImpact = null)
         {
             Quaternion finalRotation = DieFaceLayout.RotationShowing(value, Random.Range(0f, 360f));
             Vector3 spinAxis = Random.onUnitSphere;
@@ -90,7 +91,7 @@ namespace JokerGO.Game.Dice
         /// </summary>
         public static GameObject ConstructTemplate(Material bodyMaterial, Color faceColor, float size)
         {
-            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
             body.name = "Die";
             body.transform.localScale = Vector3.one * size;
             body.GetComponent<Renderer>().sharedMaterial = bodyMaterial;
@@ -100,7 +101,7 @@ namespace JokerGO.Game.Dice
                 AddFaceLabel(body.transform, value, faceColor);
             }
 
-            var outline = body.AddComponent<Outline>();
+            Outline outline = body.AddComponent<Outline>();
             outline.OutlineMode = Outline.Mode.OutlineAll;
             outline.OutlineColor = faceColor;
             outline.OutlineWidth = 4f;
@@ -111,7 +112,7 @@ namespace JokerGO.Game.Dice
 
         private static void AddFaceLabel(Transform body, int value, Color color)
         {
-            var go = new GameObject($"Face {value}");
+            GameObject go = new GameObject($"Face {value}");
             go.transform.SetParent(body, false);
 
             Vector3 normal = DieFaceLayout.NormalOf(value);
@@ -120,7 +121,7 @@ namespace JokerGO.Game.Dice
             Vector3 up = Mathf.Abs(normal.y) > 0.5f ? Vector3.forward : Vector3.up;
             go.transform.localRotation = Quaternion.LookRotation(-normal, up);
 
-            var tmp = go.AddComponent<TextMeshPro>();
+            TextMeshPro tmp = go.AddComponent<TextMeshPro>();
             tmp.text = value == 6 ? "<u>6</u>" : value.ToString();
             tmp.fontSize = 5f;
             tmp.color = color;

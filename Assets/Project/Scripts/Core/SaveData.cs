@@ -1,6 +1,6 @@
 using System;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>
     /// Serializable snapshot of persistent progress. Field names define the save JSON keys.

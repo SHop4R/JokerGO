@@ -1,4 +1,4 @@
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Map data boundary. Implementations decide where map data comes from.</summary>
     public interface IMapSource

@@ -1,10 +1,11 @@
 using System;
-using JokerGO.Core;
+using System.Collections;
+using JokerGO.Core.Project.Scripts.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace JokerGO.UI
+namespace JokerGO.UI.Project.Scripts.UI
 {
     /// <summary>Top-right inventory: one row per item type with a color chip and live count.</summary>
     public sealed class InventoryPanelView : MonoBehaviour
@@ -18,26 +19,21 @@ namespace JokerGO.UI
         public void Refresh(Inventory inventory)
         {
             if (inventory == null)
-            {
                 throw new ArgumentNullException(nameof(inventory));
-            }
 
-            for (int i = 0; i < countLabels.Length; i++)
-            {
+            for (int i = 0; i < countLabels.Length; i++) 
                 countLabels[i].text = inventory.Get((ItemType)i).ToString();
-            }
         }
 
         /// <summary>Screen anchor that collect flights aim for.</summary>
-        public RectTransform CounterTarget(ItemType type) => countLabels[(int)type].rectTransform;
+        public RectTransform CounterTarget(ItemType type) 
+            => countLabels[(int)type].rectTransform;
 
         /// <summary>Pops the counter when items arrive.</summary>
-        public void Punch(ItemType type)
-        {
-            StartCoroutine(PunchRoutine(countLabels[(int)type].rectTransform));
-        }
+        public void Punch(ItemType type) 
+            => StartCoroutine(PunchRoutine(countLabels[(int)type].rectTransform));
 
-        private System.Collections.IEnumerator PunchRoutine(RectTransform target)
+        private static IEnumerator PunchRoutine(RectTransform target)
         {
             const float duration = 0.28f;
             float elapsed = 0f;
@@ -57,14 +53,14 @@ namespace JokerGO.UI
         public static InventoryPanelView Author(Transform canvasParent)
         {
             RectTransform panel = UiFactory.CreatePanel(canvasParent, "InventoryPanel", UiTheme.PanelBackground);
-            panel.anchorMin = new Vector2(1f, 1f);
-            panel.anchorMax = new Vector2(1f, 1f);
-            panel.pivot = new Vector2(1f, 1f);
-            panel.anchoredPosition = new Vector2(-24f, -24f);
-            panel.sizeDelta = new Vector2(PanelWidth, 0f);
+            panel.anchorMin = new(1f, 1f);
+            panel.anchorMax = new(1f, 1f);
+            panel.pivot = new(1f, 1f);
+            panel.anchoredPosition = new(-24f, -24f);
+            panel.sizeDelta = new(PanelWidth, 0f);
 
-            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(20, 20, 16, 20);
+            VerticalLayoutGroup layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new(20, 20, 16, 20);
             layout.spacing = 10f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -77,8 +73,8 @@ namespace JokerGO.UI
                 UiTheme.HeaderFontSize, UiTheme.Accent, TextAlignmentOptions.Left);
             header.gameObject.AddComponent<LayoutElement>().preferredHeight = 48f;
 
-            var view = panel.gameObject.AddComponent<InventoryPanelView>();
-            var types = (ItemType[])Enum.GetValues(typeof(ItemType));
+            InventoryPanelView view = panel.gameObject.AddComponent<InventoryPanelView>();
+            ItemType[] types = (ItemType[])Enum.GetValues(typeof(ItemType));
             view.countLabels = new TextMeshProUGUI[types.Length];
             foreach (ItemType type in types)
             {
@@ -90,21 +86,21 @@ namespace JokerGO.UI
 
         private static TextMeshProUGUI AuthorRow(RectTransform panel, ItemType type)
         {
-            var row = new GameObject($"{type}Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            GameObject row = new($"{type}Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             row.transform.SetParent(panel, false);
             row.AddComponent<LayoutElement>().preferredHeight = RowHeight;
 
-            var layout = row.GetComponent<HorizontalLayoutGroup>();
+            HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
             layout.spacing = 14f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
             layout.childAlignment = TextAnchor.MiddleLeft;
 
-            var chip = new GameObject("Chip", typeof(Image));
+            GameObject chip = new("Chip", typeof(Image));
             chip.transform.SetParent(row.transform, false);
             chip.GetComponent<Image>().color = UiTheme.ItemColor(type);
-            var chipElement = chip.AddComponent<LayoutElement>();
+            LayoutElement chipElement = chip.AddComponent<LayoutElement>();
             chipElement.preferredWidth = ChipSize;
             chipElement.preferredHeight = ChipSize;
 

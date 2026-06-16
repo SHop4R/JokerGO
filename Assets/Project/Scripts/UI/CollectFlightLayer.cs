@@ -1,14 +1,16 @@
 using System;
 using System.Collections;
-using JokerGO.Core;
+using JokerGO.Core.Project.Scripts.Core;
+using JokerGO.Pooling.Project.Scripts.Pooling;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace JokerGO.UI
+namespace JokerGO.UI.Project.Scripts.UI
 {
     /// <summary>
     /// Animates collected-item chips from a screen point into the inventory counter,
-    /// on a curved path with a small stagger per chip.
+    /// on a curved path with a small stagger per chip. Chips are pooled, never
+    /// instantiated/destroyed per collection.
     /// </summary>
     public sealed class CollectFlightLayer : MonoBehaviour
     {
@@ -16,11 +18,25 @@ namespace JokerGO.UI
         private const float FlightDuration = 0.55f;
         private const float StaggerStep = 0.07f;
         private const float CurveSideways = 160f;
+        private const int ChipPoolDefault = 8;
+        private const int ChipPoolMax = 24;
+
+        private static readonly WaitForSeconds StaggerWait = new(StaggerStep);
+
+        private Pool<Image> _chipPool;
+
+        private void Awake()
+        {
+            Image template = CreateChip("ChipTemplate");
+            template.gameObject.SetActive(false);
+            _chipPool = new Pool<Image>(
+                new PoolStats<Image>(template, ChipPoolDefault, ChipPoolMax, true), transform);
+        }
 
         /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
         public static CollectFlightLayer Author(Transform canvasParent)
         {
-            var go = new GameObject("CollectFlight", typeof(RectTransform));
+            GameObject go = new("CollectFlight", typeof(RectTransform));
             go.transform.SetParent(canvasParent, false);
             UiFactory.Stretch((RectTransform)go.transform);
             return go.AddComponent<CollectFlightLayer>();
@@ -30,7 +46,7 @@ namespace JokerGO.UI
         public void Fly(Vector2 fromScreen, ItemType type, RectTransform target,
             int chipCount, Action onFirstArrival)
         {
-            if (target == null)
+            if (!target)
             {
                 onFirstArrival?.Invoke();
                 return;
@@ -47,30 +63,27 @@ namespace JokerGO.UI
             {
                 StartCoroutine(FlyOne(fromScreen, type, target, () =>
                 {
-                    if (!arrivedOnce)
-                    {
-                        arrivedOnce = true;
-                        onFirstArrival?.Invoke();
-                    }
+                    if (arrivedOnce) return;
+                    arrivedOnce = true;
+                    onFirstArrival?.Invoke();
                 }));
-                yield return new WaitForSeconds(StaggerStep);
+                yield return StaggerWait;
             }
         }
 
         private IEnumerator FlyOne(Vector2 fromScreen, ItemType type, RectTransform target, Action onArrive)
         {
-            var chip = new GameObject("Chip", typeof(Image));
-            chip.transform.SetParent(transform, false);
-
-            var image = chip.GetComponent<Image>();
-            image.color = UiTheme.ItemColor(type);
-            image.raycastTarget = false;
-
-            var rect = (RectTransform)chip.transform;
-            rect.sizeDelta = new Vector2(ChipSize, ChipSize);
-
             Vector3 start = new Vector3(fromScreen.x, fromScreen.y, 0f)
                             + (Vector3)UnityEngine.Random.insideUnitCircle * 26f;
+            Color color = UiTheme.ItemColor(type);
+
+            Image chip = _chipPool.Spawn(start, image =>
+            {
+                image.color = color;
+                image.rectTransform.localScale = Vector3.one;
+            });
+            RectTransform rect = chip.rectTransform;
+
             Vector3 control = Vector3.Lerp(start, target.position, 0.5f)
                               + Vector3.right * UnityEngine.Random.Range(-CurveSideways, CurveSideways);
 
@@ -89,7 +102,19 @@ namespace JokerGO.UI
             }
 
             onArrive?.Invoke();
-            Destroy(chip);
+            _chipPool.Return(chip);
+        }
+
+        /// <summary>Builds one chip Image (RectTransform sized, non-interactive).</summary>
+        private Image CreateChip(string chipName)
+        {
+            GameObject go = new(chipName, typeof(Image));
+            go.transform.SetParent(transform, false);
+
+            Image image = go.GetComponent<Image>();
+            image.raycastTarget = false;
+            ((RectTransform)go.transform).sizeDelta = new(ChipSize, ChipSize);
+            return image;
         }
     }
 }

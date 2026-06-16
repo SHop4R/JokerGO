@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using JokerGO.Core;
+using JokerGO.Core.Project.Scripts.Core;
 using UnityEngine;
 
-namespace JokerGO.Game.Data
+namespace JokerGO.Game.Project.Scripts.Game.Data
 {
     /// <summary>Stores SaveData as JSON under Application.persistentDataPath.</summary>
     public sealed class FileSaveRepository : ISaveRepository

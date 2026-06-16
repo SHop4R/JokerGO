@@ -3,11 +3,13 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
-namespace JokerGO.Game.ObjectPool
+namespace JokerGO.Pooling.Project.Scripts.Pooling
 {
     /// <summary>
-    /// Component pool over <see cref="UnityEngine.Pool.ObjectPool{T}"/>: spawns activate,
-    /// returns deactivate, and <see cref="IPoolable"/> implementors get reset callbacks.
+    /// Component pool over <see cref="UnityEngine.Pool.ObjectPool{T}"/>. Pooled instances are
+    /// always kept inactive; a spawn resets the instance and applies caller values
+    /// <em>before</em> the object is activated, so it never shows a frame of stale state.
+    /// <see cref="IPoolable"/> implementors get reset callbacks on spawn and return.
     /// </summary>
     public class Pool<T> where T : Component
     {
@@ -28,7 +30,7 @@ namespace JokerGO.Game.ObjectPool
 
             _pool = new ObjectPool<T>(
                 OnObjectCreate,
-                OnObjectGet,
+                null,
                 OnObjectRelease,
                 OnObjectDestroy,
                 true,
@@ -39,10 +41,23 @@ namespace JokerGO.Game.ObjectPool
                 PreGenerate(stats.DefaultPoolSize);
         }
 
-        public T Spawn(Vector3 position)
+        public T Spawn(Vector3 position) => Spawn(position, null);
+
+        /// <summary>
+        /// Takes an inactive instance from the pool, resets it, runs <paramref name="configure"/>
+        /// to assign per-spawn values, and only then activates it.
+        /// </summary>
+        public T Spawn(Vector3 position, Action<T> configure)
         {
             T obj = _pool.Get();
             obj.transform.position = position;
+
+            if (obj is IPoolable poolable)
+                poolable.OnSpawn();
+
+            configure?.Invoke(obj);
+
+            obj.gameObject.SetActive(true);
             return obj;
         }
 
@@ -55,15 +70,9 @@ namespace JokerGO.Game.ObjectPool
             if (_poolParent)
                 instance.transform.SetParent(_poolParent);
 
+            // Held inactive until a caller assigns its values through Spawn.
+            instance.gameObject.SetActive(false);
             return instance;
-        }
-
-        private static void OnObjectGet(T obj)
-        {
-            obj.gameObject.SetActive(true);
-
-            if (obj is IPoolable poolable)
-                poolable.OnSpawn();
         }
 
         private static void OnObjectRelease(T obj)

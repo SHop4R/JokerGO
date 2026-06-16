@@ -1,8 +1,9 @@
-using JokerGO.Game;
-using JokerGO.Game.Board;
-using JokerGO.Game.Dice;
-using JokerGO.Game.Fx;
-using JokerGO.UI;
+using JokerGO.Core.Project.Scripts.Core;
+using JokerGO.Game.Project.Scripts.Game;
+using JokerGO.Game.Project.Scripts.Game.Board;
+using JokerGO.Game.Project.Scripts.Game.Dice;
+using JokerGO.Game.Project.Scripts.Game.Fx;
+using JokerGO.UI.Project.Scripts.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -10,7 +11,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.Rendering.Universal;
 
-namespace JokerGO.Editor
+namespace JokerGO.Editor.Project.Scripts.Editor
 {
     /// <summary>
     /// One-click scene authoring: generates all prefabs (camera rig, player, HUD,
@@ -45,7 +46,7 @@ namespace JokerGO.Editor
 
             GameObject tilePrefab = AuthorPrefab(TileView.Author(style), "Tile");
             GameObject playerPrefab = AuthorPrefab(
-                PlayerTokenView.Author(style.GetItemMaterial(Core.ItemType.Strawberry)), "Player");
+                PlayerTokenView.Author(style.GetItemMaterial(ItemType.Strawberry)), "Player");
             GameObject hudPrefab = AuthorPrefab(GameHud.Author().gameObject, "HUD");
             GameObject rigPrefab = AuthorPrefab(AuthorCameraRig(), "CameraRig");
             GameObject systemsPrefab = AuthorPrefab(AuthorSystems(tilePrefab), "Systems");

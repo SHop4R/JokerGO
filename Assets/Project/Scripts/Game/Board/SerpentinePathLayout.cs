@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace JokerGO.Game.Board
+namespace JokerGO.Game.Project.Scripts.Game.Board
 {
     /// <summary>
     /// Lays tiles along a winding serpentine (x = A·sin(2πz/λ)) with equal straight-line

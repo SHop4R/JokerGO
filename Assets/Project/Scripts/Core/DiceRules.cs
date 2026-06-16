@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Dice constraints from the case study: 1-20 dice, each valued 1-6.</summary>
     public static class DiceRules
@@ -13,41 +14,24 @@ namespace JokerGO.Core
         public static RollValidation Validate(IReadOnlyList<int> values)
         {
             if (values == null)
-            {
                 throw new System.ArgumentNullException(nameof(values));
-            }
 
-            if (values.Count < MinDiceCount)
+            switch (values.Count)
             {
-                return RollValidation.Fail("Enter a value for at least one die.");
-            }
+                case < MinDiceCount:
+                    return RollValidation.Fail("Enter a value for at least one die.");
 
-            if (values.Count > MaxDiceCount)
-            {
-                return RollValidation.Fail($"At most {MaxDiceCount} dice are supported.");
+                case > MaxDiceCount:
+                    return RollValidation.Fail($"At most {MaxDiceCount} dice are supported.");
             }
 
             for (int i = 0; i < values.Count; i++)
             {
                 if (values[i] < MinValue || values[i] > MaxValue)
-                {
-                    return RollValidation.Fail(
-                        $"Die {i + 1} must be between {MinValue} and {MaxValue}.");
-                }
+                    return RollValidation.Fail($"Die {i + 1} must be between {MinValue} and {MaxValue}.");
             }
 
             return RollValidation.Success;
-        }
-
-        public static int Sum(IReadOnlyList<int> values)
-        {
-            int sum = 0;
-            for (int i = 0; i < values.Count; i++)
-            {
-                sum += values[i];
-            }
-
-            return sum;
         }
     }
 }

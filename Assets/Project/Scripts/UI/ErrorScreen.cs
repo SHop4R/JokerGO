@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace JokerGO.UI
+namespace JokerGO.UI.Project.Scripts.UI
 {
     /// <summary>Full-screen failure notice for unrecoverable startup errors (e.g. broken map data).</summary>
     public static class ErrorScreen
@@ -12,7 +12,7 @@ namespace JokerGO.UI
             canvas.gameObject.name = "ErrorScreen";
 
             RectTransform backdrop = UiFactory.CreatePanel(
-                canvas.transform, "Backdrop", new Color(0.08f, 0.05f, 0.04f, 0.92f));
+                canvas.transform, "Backdrop", new(0.08f, 0.05f, 0.04f, 0.92f));
             UiFactory.Stretch(backdrop);
 
             TextMeshProUGUI title = UiFactory.CreateText(backdrop, "Title", "OOPS!",
@@ -32,8 +32,8 @@ namespace JokerGO.UI
 
         private static void Place(RectTransform rect, float yMin, float yMax)
         {
-            rect.anchorMin = new Vector2(0.08f, yMin);
-            rect.anchorMax = new Vector2(0.92f, yMax);
+            rect.anchorMin = new(0.08f, yMin);
+            rect.anchorMax = new(0.92f, yMax);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
         }

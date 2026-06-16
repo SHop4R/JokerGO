@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using JokerGO.Core;
+using JokerGO.Core.Project.Scripts.Core;
 using UnityEngine;
 
-namespace JokerGO.Game.Board
+namespace JokerGO.Game.Project.Scripts.Game.Board
 {
     /// <summary>Spawns Tile prefab instances for a <see cref="BoardMap"/> along a winding serpentine path.</summary>
     public sealed class BoardBuilder : MonoBehaviour

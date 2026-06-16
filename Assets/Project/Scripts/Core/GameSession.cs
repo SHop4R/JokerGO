@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Turn phases. Presentation drives pacing; rules live in <see cref="GameSession"/>.</summary>
     public enum SessionState
@@ -17,10 +18,10 @@ namespace JokerGO.Core
     /// </summary>
     public sealed class GameSession
     {
-        public SessionState State { get; private set; } = SessionState.Idle;
-        public int CurrentTileIndex { get; private set; }
-        public Inventory Inventory { get; private set; }
-        public BoardMap Map { get; }
+        private SessionState State{ get; set; } = SessionState.Idle;
+        public int CurrentTileIndex{ get; private set; }
+        public Inventory Inventory{ get; private set; }
+        private BoardMap Map{ get; }
 
         /// <summary>Roll accepted; carries the typed dice values to animate.</summary>
         public event Action<IReadOnlyList<int>> RollStarted;
@@ -37,13 +38,13 @@ namespace JokerGO.Core
         /// <summary>Turn finished; the session accepts rolls again.</summary>
         public event Action TurnEnded;
 
-        private readonly ISaveRepository saveRepository;
-        private IReadOnlyList<int> pendingPath;
+        private readonly ISaveRepository _saveRepository;
+        private IReadOnlyList<int> _pendingPath;
 
         public GameSession(BoardMap map, ISaveRepository saveRepository, Inventory inventory, int startTileIndex)
         {
             Map = map ?? throw new ArgumentNullException(nameof(map));
-            this.saveRepository = saveRepository ?? throw new ArgumentNullException(nameof(saveRepository));
+            this._saveRepository = saveRepository ?? throw new ArgumentNullException(nameof(saveRepository));
             Inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
 
             if (startTileIndex < 0 || startTileIndex >= map.TileCount)
@@ -58,18 +59,15 @@ namespace JokerGO.Core
         public RollValidation TryRoll(IReadOnlyList<int> diceValues)
         {
             if (State != SessionState.Idle)
-            {
                 return RollValidation.Fail("A turn is already in progress.");
-            }
 
             RollValidation validation = DiceRules.Validate(diceValues);
+            
             if (!validation.IsValid)
-            {
                 return validation;
-            }
 
-            int steps = DiceRules.Sum(diceValues);
-            pendingPath = MovementCalculator.ComputePath(CurrentTileIndex, steps, Map.TileCount);
+            int steps = diceValues.Sum();
+            _pendingPath = MovementCalculator.ComputePath(CurrentTileIndex, steps, Map.TileCount);
             State = SessionState.Rolling;
             RollStarted?.Invoke(diceValues);
             return RollValidation.Success;
@@ -80,7 +78,7 @@ namespace JokerGO.Core
         {
             RequireState(SessionState.Rolling, nameof(NotifyDiceShown));
             State = SessionState.Moving;
-            MoveStarted?.Invoke(pendingPath);
+            MoveStarted?.Invoke(_pendingPath);
         }
 
         /// <summary>Called by the token view once it has hopped the whole path.</summary>
@@ -88,8 +86,8 @@ namespace JokerGO.Core
         {
             RequireState(SessionState.Moving, nameof(NotifyMoveCompleted));
 
-            CurrentTileIndex = pendingPath[pendingPath.Count - 1];
-            pendingPath = null;
+            CurrentTileIndex = _pendingPath[^1];
+            _pendingPath = null;
 
             MapTile landed = Map[CurrentTileIndex];
             TileLanded?.Invoke(landed);
@@ -103,7 +101,7 @@ namespace JokerGO.Core
 
             try
             {
-                saveRepository.Save(SaveDataMapper.ToSaveData(Inventory, CurrentTileIndex));
+                _saveRepository.Save(SaveDataMapper.ToSaveData(Inventory, CurrentTileIndex));
             }
             finally
             {
@@ -115,10 +113,7 @@ namespace JokerGO.Core
         private void RequireState(SessionState expected, string operation)
         {
             if (State != expected)
-            {
-                throw new InvalidOperationException(
-                    $"{operation} is only valid in the {expected} state, but the session is {State}.");
-            }
+                throw new InvalidOperationException($"{operation} is only valid in the {expected} state, but the session is {State}.");
         }
     }
 }

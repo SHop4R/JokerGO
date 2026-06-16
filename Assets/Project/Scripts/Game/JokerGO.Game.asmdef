@@ -4,6 +4,7 @@
     "references": [
         "JokerGO.Core",
         "JokerGO.UI",
+        "JokerGO.Pooling",
         "Unity.TextMeshPro",
         "Unity.InputSystem",
         "Unity.Cinemachine",

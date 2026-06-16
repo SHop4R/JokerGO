@@ -1,8 +1,8 @@
-using JokerGO.Game.Dice;
+using JokerGO.Game.Project.Scripts.Game.Dice;
 using UnityEditor;
 using UnityEngine;
 
-namespace JokerGO.Editor
+namespace JokerGO.Editor.Project.Scripts.Editor
 {
     /// <summary>
     /// One-click generation of the project's material and prefab assets

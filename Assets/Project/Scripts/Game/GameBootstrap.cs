@@ -1,12 +1,12 @@
 using System;
-using JokerGO.Core;
-using JokerGO.Game.Board;
-using JokerGO.Game.Data;
-using JokerGO.Game.Dice;
-using JokerGO.UI;
+using JokerGO.Core.Project.Scripts.Core;
+using JokerGO.Game.Project.Scripts.Game.Board;
+using JokerGO.Game.Project.Scripts.Game.Data;
+using JokerGO.Game.Project.Scripts.Game.Dice;
+using JokerGO.UI.Project.Scripts.UI;
 using UnityEngine;
 
-namespace JokerGO.Game
+namespace JokerGO.Game.Project.Scripts.Game
 {
     /// <summary>
     /// Composition root: loads data, builds the domain session and wires the
@@ -25,12 +25,9 @@ namespace JokerGO.Game
         [SerializeField] private GameFlowPresenter presenter;
         [SerializeField] private DiceRollDirector diceDirector;
 
-        public GameSession Session { get; private set; }
+        private GameSession Session{ get; set; }
 
-        private void Awake()
-        {
-            Application.targetFrameRate = TargetFrameRate;
-        }
+        private void Awake() => Application.targetFrameRate = TargetFrameRate;
 
         private void Start()
         {
@@ -38,17 +35,10 @@ namespace JokerGO.Game
             {
                 Initialize();
             }
-            catch (MapValidationException e)
-            {
-                Debug.LogError($"[JokerGO] Map error: {e.Message}");
-                ErrorScreen.Show(e.Message,
-                    "Fix Assets/StreamingAssets/map.json and restart the game.");
-            }
             catch (Exception e)
             {
-                Debug.LogError($"[JokerGO] Failed to start: {e}");
-                ErrorScreen.Show("Something went wrong while starting the game.",
-                    "Check the console/log for details and restart the game.");
+                Debug.LogError($"[JokerGO] Map error: {e.Message}");
+                ErrorScreen.Show(e.Message, "Fix Assets/StreamingAssets/map.json and restart the game.");
             }
         }
 
@@ -61,7 +51,7 @@ namespace JokerGO.Game
 
             BoardMap map = mapSource.Load();
             (Inventory inventory, int startTile) = SaveDataMapper.FromSaveData(saveRepository.Load(), map.TileCount);
-            Session = new GameSession(map, saveRepository, inventory, startTile);
+            Session = new(map, saveRepository, inventory, startTile);
 
             BoardStyle style = BoardStyle.CreateDefault();
             board.Build(map, style);
@@ -88,11 +78,8 @@ namespace JokerGO.Game
 
         private static void Require(UnityEngine.Object reference, string fieldName)
         {
-            if (reference == null)
-            {
-                throw new InvalidOperationException(
-                    $"Scene reference '{fieldName}' is not assigned; run JokerGO > Author Scene.");
-            }
+            if (!reference)
+                throw new InvalidOperationException($"Scene reference '{fieldName}' is not assigned; run JokerGO > Author Scene.");
         }
 
         /// <summary>Editor-time wiring of all scene references.</summary>

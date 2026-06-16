@@ -1,8 +1,8 @@
 using System;
-using JokerGO.Core;
+using JokerGO.Core.Project.Scripts.Core;
 using UnityEngine;
 
-namespace JokerGO.Game.Board
+namespace JokerGO.Game.Project.Scripts.Game.Board
 {
     /// <summary>Visual constants for the board plus the shared material assets it renders with.</summary>
     public sealed class BoardStyle

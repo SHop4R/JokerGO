@@ -1,6 +1,6 @@
 using System;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Maps between the domain state and its serializable snapshot.</summary>
     public static class SaveDataMapper

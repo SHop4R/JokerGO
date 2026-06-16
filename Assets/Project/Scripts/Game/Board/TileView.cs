@@ -1,8 +1,8 @@
-using JokerGO.Core;
+using JokerGO.Core.Project.Scripts.Core;
 using TMPro;
 using UnityEngine;
 
-namespace JokerGO.Game.Board
+namespace JokerGO.Game.Project.Scripts.Game.Board
 {
     /// <summary>
     /// One board tile, instantiated from the Tile prefab and configured per map data:

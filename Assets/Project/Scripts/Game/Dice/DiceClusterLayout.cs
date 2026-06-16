@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace JokerGO.Game.Dice
+namespace JokerGO.Game.Project.Scripts.Game.Dice
 {
     /// <summary>
     /// Organic landing spots for N dice: a jittered golden-angle cluster around a

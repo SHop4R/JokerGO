@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Turns raw map data into a validated <see cref="BoardMap"/>, failing with clear messages.</summary>
     public static class BoardMapFactory
@@ -11,45 +12,28 @@ namespace JokerGO.Core
         public static BoardMap Create(MapFileDto dto)
         {
             if (dto?.tiles == null)
-            {
-                throw new MapValidationException("Map file is missing a 'tiles' array (check the JSON structure).");
-            }
+                throw new("Map file is missing a 'tiles' array (check the JSON structure).");
 
-            var tiles = new List<MapTile>(dto.tiles.Count);
-            for (int i = 0; i < dto.tiles.Count; i++)
-            {
-                tiles.Add(CreateTile(dto.tiles[i], i));
-            }
+            List<MapTile> tiles = new(dto.tiles.Count);
+            tiles.AddRange(dto.tiles.Select(CreateTile));
 
-            return new BoardMap(tiles);
+            return new(tiles);
         }
 
         private static MapTile CreateTile(TileDto dto, int index)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.item)
-                || dto.item.Trim().Equals(EmptyKeyword, StringComparison.OrdinalIgnoreCase))
-            {
-                return new MapTile(index, null);
-            }
+            if (dto == null || string.IsNullOrWhiteSpace(dto.item) || dto.item.Trim().Equals(EmptyKeyword, StringComparison.OrdinalIgnoreCase))
+                return new(index, null);
 
             if (!TryParseItem(dto.item, out ItemType type))
-            {
-                throw new MapValidationException(
-                    $"Tile {index + 1}: unknown item '{dto.item}'. Expected apple, pear, strawberry or empty.");
-            }
+                throw new($"Tile {index + 1}: unknown item '{dto.item}'. Expected apple, pear, strawberry or empty.");
 
-            if (dto.amount <= 0)
-            {
-                throw new MapValidationException(
-                    $"Tile {index + 1}: amount for '{dto.item}' must be positive, got {dto.amount}.");
-            }
-
-            return new MapTile(index, new ItemStack(type, dto.amount));
+            return dto.amount <= 0 
+                ? throw new($"Tile {index + 1}: amount for '{dto.item}' must be positive, got {dto.amount}.")
+                : new(index, new ItemStack(type, dto.amount));
         }
 
-        private static bool TryParseItem(string raw, out ItemType type)
-        {
-            return Enum.TryParse(raw.Trim(), ignoreCase: true, out type) && Enum.IsDefined(typeof(ItemType), type);
-        }
+        private static bool TryParseItem(string raw, out ItemType type) 
+            => Enum.TryParse(raw.Trim(), ignoreCase: true, out type) && Enum.IsDefined(typeof(ItemType), type);
     }
 }

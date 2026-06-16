@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
-using JokerGO.Game.Dice;
-using JokerGO.Game.ObjectPool;
-using JokerGO.Game.Utils;
+using JokerGO.Game.Project.Scripts.Game.Dice;
+using JokerGO.Pooling.Project.Scripts.Pooling;
+using JokerGO.Game.Project.Scripts.Game.Utils;
 using UnityEngine;
 
-namespace JokerGO.Game.Fx
+namespace JokerGO.Game.Project.Scripts.Game.Fx
 {
     /// <summary>
     /// Central pool owner: dust/burst particles and dice are spawned from pools and
@@ -33,16 +33,18 @@ namespace JokerGO.Game.Fx
             _burstParent = CreateParent("--- Burst Particles ---");
             _diceParent = CreateParent("--- Dice ---");
 
-            _dustPool = new(new PoolStats<ParticleSystem>(dustPrefab, 8, 24, true), _dustParent);
-            _burstPool = new(new PoolStats<ParticleSystem>(burstPrefab, 2, 8, true), _burstParent);
-            _dicePool = new(new PoolStats<DieView>(diePrefab, 5, 20, true), _diceParent);
+            _dustPool = new(new(dustPrefab, 8, 24, true), _dustParent);
+            _burstPool = new(new(burstPrefab, 2, 8, true), _burstParent);
+            _dicePool = new(new(diePrefab, 5, 20, true), _diceParent);
         }
 
         public void PlayDust(Vector3 position, float scale = 1f)
         {
-            ParticleSystem particle = _dustPool.Spawn(position);
-            EnsureHierarchyScaling(particle);
-            particle.transform.localScale = Vector3.one * scale;
+            ParticleSystem particle = _dustPool.Spawn(position, dust =>
+            {
+                EnsureHierarchyScaling(dust);
+                dust.transform.localScale = Vector3.one * scale;
+            });
             particle.Play();
 
             StartCoroutine(ReturnParticleAfterDuration(particle, () => _dustPool.Return(particle)));
@@ -50,15 +52,16 @@ namespace JokerGO.Game.Fx
 
         public void PlayBurst(Vector3 position, Color color)
         {
-            ParticleSystem particle = _burstPool.Spawn(position);
-            EnsureHierarchyScaling(particle);
-
-            foreach (ParticleSystem system in particle.GetComponentsInChildren<ParticleSystem>())
+            ParticleSystem particle = _burstPool.Spawn(position, burst =>
             {
-                ParticleSystem.MainModule main = system.main;
-                main.startColor = color;
-            }
+                EnsureHierarchyScaling(burst);
 
+                foreach (ParticleSystem system in burst.GetComponentsInChildren<ParticleSystem>())
+                {
+                    ParticleSystem.MainModule main = system.main;
+                    main.startColor = color;
+                }
+            });
             particle.Play();
 
             StartCoroutine(ReturnParticleAfterDuration(particle, () => _burstPool.Return(particle)));

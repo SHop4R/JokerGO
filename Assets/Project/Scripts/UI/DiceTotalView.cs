@@ -2,7 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-namespace JokerGO.UI
+namespace JokerGO.UI.Project.Scripts.UI
 {
     /// <summary>Big animated total that pops over the dice close-up once they settle.</summary>
     public sealed class DiceTotalView : MonoBehaviour
@@ -15,20 +15,20 @@ namespace JokerGO.UI
 
         [SerializeField] private TextMeshProUGUI label;
 
-        private Coroutine playing;
+        private Coroutine _playing;
 
         /// <summary>Editor-time construction; the result is saved into the HUD prefab.</summary>
         public static DiceTotalView Author(Transform canvasParent)
         {
-            var go = new GameObject("DiceTotal", typeof(RectTransform));
+            GameObject go = new("DiceTotal", typeof(RectTransform));
             go.transform.SetParent(canvasParent, false);
 
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = new Vector2(0.5f, 0.6f);
-            rect.anchorMax = new Vector2(0.5f, 0.6f);
-            rect.sizeDelta = new Vector2(600f, 220f);
+            RectTransform rect = (RectTransform)go.transform;
+            rect.anchorMin = new(0.5f, 0.6f);
+            rect.anchorMax = new(0.5f, 0.6f);
+            rect.sizeDelta = new(600f, 220f);
 
-            var view = go.AddComponent<DiceTotalView>();
+            DiceTotalView view = go.AddComponent<DiceTotalView>();
             view.label = UiFactory.CreateText(rect, "Value", string.Empty,
                 FontSize, UiTheme.Accent, TextAlignmentOptions.Center);
             UiFactory.Stretch(view.label.rectTransform);
@@ -39,12 +39,10 @@ namespace JokerGO.UI
 
         public void Show(int total)
         {
-            if (playing != null)
-            {
-                StopCoroutine(playing);
-            }
+            if (_playing != null) 
+                StopCoroutine(_playing);
 
-            playing = StartCoroutine(PopRoutine(total));
+            _playing = StartCoroutine(PopRoutine(total));
         }
 
         private IEnumerator PopRoutine(int total)
@@ -77,7 +75,7 @@ namespace JokerGO.UI
 
             label.alpha = 0f;
             label.rectTransform.localScale = Vector3.one;
-            playing = null;
+            _playing = null;
         }
     }
 }

@@ -1,15 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
-using JokerGO.Core;
-using JokerGO.Game.Board;
-using JokerGO.Game.Dice;
-using JokerGO.Game.Fx;
-using JokerGO.Game.Tweening;
-using JokerGO.Game.Utils;
-using JokerGO.UI;
+using System.Linq;
+using JokerGO.Core.Project.Scripts.Core;
+using JokerGO.Game.Project.Scripts.Game.Board;
+using JokerGO.Game.Project.Scripts.Game.Dice;
+using JokerGO.Game.Project.Scripts.Game.Fx;
+using JokerGO.Game.Project.Scripts.Game.Tweening;
+using JokerGO.Game.Project.Scripts.Game.Utils;
+using JokerGO.UI.Project.Scripts.UI;
 using UnityEngine;
 
-namespace JokerGO.Game
+namespace JokerGO.Game.Project.Scripts.Game
 {
     /// <summary>
     /// Bridges the rules engine and the views: animates what GameSession decides,
@@ -32,61 +33,59 @@ namespace JokerGO.Game
         private const float WrapFallHeight = 7f;
         private const float WrapFallDuration = 0.5f;
 
-        private GameSession session;
-        private BoardBuilder board;
-        private PlayerTokenView token;
-        private DiceRollDirector dice;
-        private CameraDirector cameraDirector;
-        private GameHud hud;
-        private Camera viewCamera;
+        private GameSession _session;
+        private BoardBuilder _board;
+        private PlayerTokenView _token;
+        private DiceRollDirector _dice;
+        private CameraDirector _cameraDirector;
+        private GameHud _hud;
+        private Camera _viewCamera;
 
         public void Initialize(GameSession gameSession, BoardBuilder boardBuilder,
             PlayerTokenView tokenView, DiceRollDirector diceDirector,
-            CameraDirector cameraDirectorView, GameHud gameHud, Camera camera)
+            CameraDirector cameraDirectorView, GameHud gameHud, Camera cam)
         {
-            session = gameSession;
-            board = boardBuilder;
-            token = tokenView;
-            dice = diceDirector;
-            cameraDirector = cameraDirectorView;
-            hud = gameHud;
-            viewCamera = camera;
+            _session = gameSession;
+            _board = boardBuilder;
+            _token = tokenView;
+            _dice = diceDirector;
+            _cameraDirector = cameraDirectorView;
+            _hud = gameHud;
+            _viewCamera = cam;
 
-            session.RollStarted += OnRollStarted;
-            session.MoveStarted += OnMoveStarted;
-            session.TileLanded += OnTileLanded;
-            session.ItemsCollected += OnItemsCollected;
+            _session.RollStarted += OnRollStarted;
+            _session.MoveStarted += OnMoveStarted;
+            _session.TileLanded += OnTileLanded;
+            _session.ItemsCollected += OnItemsCollected;
         }
 
         private void OnDestroy()
         {
-            if (session == null)
-            {
+            if (_session == null)
                 return;
-            }
 
-            session.RollStarted -= OnRollStarted;
-            session.MoveStarted -= OnMoveStarted;
-            session.TileLanded -= OnTileLanded;
-            session.ItemsCollected -= OnItemsCollected;
+            _session.RollStarted -= OnRollStarted;
+            _session.MoveStarted -= OnMoveStarted;
+            _session.TileLanded -= OnTileLanded;
+            _session.ItemsCollected -= OnItemsCollected;
         }
 
         private void OnRollStarted(IReadOnlyList<int> values)
         {
             Vector3 clusterCenter = PickDiceClusterCenter();
             Vector3[] restPositions = DiceClusterLayout.Compute(values.Count, clusterCenter,
-                DiceClusterSpacing, board.TilePositions, DiceTileClearance);
+                DiceClusterSpacing, _board.TilePositions, DiceTileClearance);
 
             Vector3 clusterCentroid = AverageOf(restPositions);
-            cameraDirector.FocusDice(clusterCentroid, MaxDistanceFrom(clusterCentroid, restPositions));
-            dice.Show(values, restPositions,
+            _cameraDirector.FocusDice(clusterCentroid, MaxDistanceFrom(clusterCentroid, restPositions));
+            _dice.Show(values, restPositions,
                 () => StartCoroutine(DiceRevealRoutine(values)), OnDieImpact);
         }
 
         private Vector3 PickDiceClusterCenter()
         {
-            Vector3 tokenPosition = board.TokenPositionOn(session.CurrentTileIndex);
-            Vector3 direction = board.PathDirectionAt(session.CurrentTileIndex);
+            Vector3 tokenPosition = _board.TokenPositionOn(_session.CurrentTileIndex);
+            Vector3 direction = _board.PathDirectionAt(_session.CurrentTileIndex);
             Vector3 side = Vector3.Cross(Vector3.up, direction).normalized;
 
             Vector3 left = tokenPosition + direction * DiceTrayForwardOffset - side * DiceTraySideOffset;
@@ -100,7 +99,8 @@ namespace JokerGO.Game
         private float MinTileDistance(Vector3 point)
         {
             float best = float.MaxValue;
-            IReadOnlyList<Vector3> tiles = board.TilePositions;
+            IReadOnlyList<Vector3> tiles = _board.TilePositions;
+            
             for (int i = 0; i < tiles.Count; i++)
             {
                 float dx = point.x - tiles[i].x;
@@ -113,25 +113,13 @@ namespace JokerGO.Game
 
         private static Vector3 AverageOf(IReadOnlyList<Vector3> points)
         {
-            Vector3 sum = Vector3.zero;
-            for (int i = 0; i < points.Count; i++)
-            {
-                sum += points[i];
-            }
-
+            Vector3 sum = points.Aggregate(Vector3.zero, (current, t) => current + t);
             return sum / points.Count;
         }
 
-        private static float MaxDistanceFrom(Vector3 center, IReadOnlyList<Vector3> points)
-        {
-            float max = 0f;
-            for (int i = 0; i < points.Count; i++)
-            {
-                max = Mathf.Max(max, Vector3.Distance(center, points[i]));
-            }
-
-            return max;
-        }
+        private static float MaxDistanceFrom(Vector3 center, IReadOnlyList<Vector3> points) 
+            => points.Aggregate(0f, (current, t) 
+                => Mathf.Max(current, Vector3.Distance(center, t)));
 
         /// <summary>
         /// Dice have settled under the close-up camera: pop the animated total,
@@ -139,53 +127,50 @@ namespace JokerGO.Game
         /// </summary>
         private IEnumerator DiceRevealRoutine(IReadOnlyList<int> values)
         {
-            if (hud != null)
-            {
-                hud.ShowDiceTotal(DiceRules.Sum(values));
-            }
+            if (_hud) 
+                _hud.ShowDiceTotal(values.Sum());
 
             yield return WaitHelper.WaitForSeconds(TotalRevealSeconds);
-            cameraDirector.ResumeFromDice();
+            _cameraDirector.ResumeFromDice();
             yield return WaitHelper.WaitForSeconds(CameraReturnBeat);
-            session.NotifyDiceShown();
+            _session.NotifyDiceShown();
         }
 
         private void OnDieImpact(Vector3 position)
         {
             PoolManager.Instance.PlayDust(position, 0.7f);
-            if (cameraDirector != null)
-            {
-                cameraDirector.Shake(0.07f);
-            }
+            
+            if (_cameraDirector) 
+                _cameraDirector.Shake(0.07f);
         }
 
         private void OnMoveStarted(IReadOnlyList<int> path)
         {
-            dice.Dismiss();
+            _dice.Dismiss();
             StartCoroutine(MoveRoutine(path));
         }
 
-        private void OnTileLanded(MapTile tile)
+        private static void OnTileLanded(MapTile tile)
         {
+            if (tile.Reward == null) return;
+
             string reward = tile.HasReward
                 ? $" — reward: {tile.Reward.Value}"
                 : " — empty";
+            
             Debug.Log($"[JokerGO] Landed on tile {tile.DisplayNumber}{reward}");
         }
 
         private void OnItemsCollected(Inventory inventory, ItemStack gained)
         {
-            Vector3 collectPoint = token.transform.position + Vector3.up * 0.4f;
+            Vector3 collectPoint = _token.transform.position + Vector3.up * 0.4f;
             PoolManager.Instance.PlayBurst(collectPoint, UiTheme.ItemColor(gained.Type));
-            if (cameraDirector != null)
-            {
-                cameraDirector.Shake(0.05f);
-            }
+            
+            if (_cameraDirector) 
+                _cameraDirector.Shake(0.05f);
 
-            if (hud != null && viewCamera != null)
-            {
-                hud.ShowCollectFlight(viewCamera.WorldToScreenPoint(collectPoint), gained);
-            }
+            if (_hud && _viewCamera) 
+                _hud.ShowCollectFlight(_viewCamera.WorldToScreenPoint(collectPoint), gained);
 
             Debug.Log($"[JokerGO] Collected {gained}. Totals — " +
                       $"Apples: {inventory.Get(ItemType.Apple)}, " +
@@ -197,7 +182,7 @@ namespace JokerGO.Game
         {
             float hopDuration = HopDurationFor(path.Count);
             bool squashEveryHop = hopDuration > 0.18f;
-            int previousIndex = session.CurrentTileIndex;
+            int previousIndex = _session.CurrentTileIndex;
 
             for (int i = 0; i < path.Count; i++)
             {
@@ -205,22 +190,17 @@ namespace JokerGO.Game
                 bool isLast = i == path.Count - 1;
 
                 if (tileIndex < previousIndex)
-                {
                     yield return WrapEntryRoutine(tileIndex);
-                }
                 else
-                {
-                    yield return token.HopTo(
-                        board.TokenPositionOn(tileIndex), hopDuration, squashEveryHop || isLast);
-                }
+                    yield return _token.HopTo(_board.TokenPositionOn(tileIndex), hopDuration, squashEveryHop || isLast);
 
-                TileView landedView = board.TileViews[tileIndex];
+                TileView landedView = _board.TileViews[tileIndex];
                 landedView.PressBounce();
                 PoolManager.Instance.PlayDust(landedView.TokenAnchor, isLast ? 1.1f : 0.6f);
                 previousIndex = tileIndex;
             }
 
-            session.NotifyMoveCompleted();
+            _session.NotifyMoveCompleted();
         }
 
         /// <summary>
@@ -229,16 +209,15 @@ namespace JokerGO.Game
         /// </summary>
         private IEnumerator WrapEntryRoutine(int tileIndex)
         {
-            yield return Tween.ScaleTo(token.transform, Vector3.zero, WrapVanishDuration,
-                EaseType.EaseInQuad);
+            yield return Tween.ScaleTo(_token.transform, Vector3.zero, WrapVanishDuration, EaseType.EaseInQuad);
 
-            Vector3 anchor = board.TokenPositionOn(tileIndex);
-            cameraDirector.FocusPoint(anchor);
-            yield return WaitHelper.WaitForSeconds(cameraDirector.HomeBlendDuration);
+            Vector3 anchor = _board.TokenPositionOn(tileIndex);
+            _cameraDirector.FocusPoint(anchor);
+            yield return WaitHelper.WaitForSeconds(_cameraDirector.HomeBlendDuration);
 
-            yield return token.FallFrom(anchor, WrapFallHeight, WrapFallDuration);
-            cameraDirector.Shake(0.12f);
-            cameraDirector.ResumeFollow();
+            yield return _token.FallFrom(anchor, WrapFallHeight, WrapFallDuration);
+            _cameraDirector.Shake(0.12f);
+            _cameraDirector.ResumeFollow();
         }
 
         /// <summary>Long paths (many dice) hop faster so movement never drags.</summary>

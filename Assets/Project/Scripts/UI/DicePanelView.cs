@@ -1,12 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using JokerGO.Core;
+using System.Linq;
+using JokerGO.Core.Project.Scripts.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace JokerGO.UI
+namespace JokerGO.UI.Project.Scripts.UI
 {
     /// <summary>
     /// Top-left dice controls: count dropdown (1-20), one labeled value box per die,
@@ -30,13 +31,13 @@ namespace JokerGO.UI
         [SerializeField] private TextMeshProUGUI errorLabel;
         [SerializeField] private CanvasGroup interactivity;
 
-        private readonly List<TMP_InputField> fields = new List<TMP_InputField>();
-        private RectTransform panel;
-        private Coroutine feedbackRoutine;
+        private readonly List<TMP_InputField> _fields = new();
+        private RectTransform _panel;
+        private Coroutine _feedbackRoutine;
 
         private void Awake()
         {
-            panel = (RectTransform)transform;
+            _panel = (RectTransform)transform;
             countDropdown.onValueChanged.AddListener(index => RebuildFields(index + DiceRules.MinDiceCount));
             rollButton.onClick.AddListener(OnRollClicked);
             RebuildFields(countDropdown.value + DiceRules.MinDiceCount);
@@ -50,28 +51,23 @@ namespace JokerGO.UI
 
         public void ShowError(string message)
         {
-            if (feedbackRoutine != null)
-            {
-                StopCoroutine(feedbackRoutine);
-            }
+            if (_feedbackRoutine != null) 
+                StopCoroutine(_feedbackRoutine);
 
-            feedbackRoutine = StartCoroutine(FeedbackRoutine(message));
+            _feedbackRoutine = StartCoroutine(FeedbackRoutine(message));
         }
 
         private void RebuildFields(int count)
         {
-            var previous = new List<string>(fields.Count);
-            foreach (TMP_InputField field in fields)
-            {
-                previous.Add(field.text);
-            }
+            List<string> previous = new(_fields.Count);
+            previous.AddRange(_fields.Select(field => field.text));
 
             foreach (Transform child in fieldsContent)
             {
                 Destroy(child.gameObject);
             }
 
-            fields.Clear();
+            _fields.Clear();
 
             for (int i = 0; i < count; i++)
             {
@@ -85,15 +81,13 @@ namespace JokerGO.UI
                 labelElement.minWidth = 140f;
                 labelElement.preferredWidth = 140f;
 
-                TMP_InputField field = UiFactory.CreateIntegerField(row, "Value",
-                    $"{DiceRules.MinValue}-{DiceRules.MaxValue} / ?");
+                TMP_InputField field = UiFactory.CreateIntegerField(row, "Value", $"{DiceRules.MinValue}-{DiceRules.MaxValue} / ?");
                 field.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+                
                 if (i < previous.Count)
-                {
                     field.SetTextWithoutNotify(previous[i]);
-                }
 
-                fields.Add(field);
+                _fields.Add(field);
             }
 
             scrollSize.preferredHeight = Mathf.Min(count * (RowHeight + 12f), MaxScrollHeight);
@@ -101,10 +95,10 @@ namespace JokerGO.UI
 
         private void OnRollClicked()
         {
-            var values = new List<int>(fields.Count);
-            for (int i = 0; i < fields.Count; i++)
+            List<int> values = new(_fields.Count);
+            for (int i = 0; i < _fields.Count; i++)
             {
-                string raw = fields[i].text.Trim();
+                string raw = _fields[i].text.Trim();
                 if (string.IsNullOrEmpty(raw))
                 {
                     values.Add(UnityEngine.Random.Range(DiceRules.MinValue, DiceRules.MaxValue + 1));
@@ -113,8 +107,7 @@ namespace JokerGO.UI
 
                 if (!int.TryParse(raw, out int value))
                 {
-                    ShowError($"Die {i + 1} needs a value between " +
-                              $"{DiceRules.MinValue} and {DiceRules.MaxValue}, or empty for random.");
+                    ShowError($"Die {i + 1} needs a value between " + $"{DiceRules.MinValue} and {DiceRules.MaxValue}, or empty for random.");
                     return;
                 }
 
@@ -128,20 +121,18 @@ namespace JokerGO.UI
         {
             errorLabel.text = message;
 
-            var fieldImages = new List<Image>(fields.Count);
-            foreach (TMP_InputField field in fields)
-            {
-                fieldImages.Add(field.GetComponent<Image>());
-            }
+            List<Image> fieldImages = new(_fields.Count);
+            fieldImages.AddRange(_fields.Select(field => field.GetComponent<Image>()));
 
-            Vector2 origin = panel.anchoredPosition;
+            Vector2 origin = _panel.anchoredPosition;
             const float shakeDuration = 0.4f;
             float elapsed = 0f;
+            
             while (elapsed < shakeDuration)
             {
                 elapsed += Time.deltaTime;
                 float decay = 1f - elapsed / shakeDuration;
-                panel.anchoredPosition = origin + Vector2.right * (Mathf.Sin(elapsed * 55f) * 10f * decay);
+                _panel.anchoredPosition = origin + Vector2.right * (Mathf.Sin(elapsed * 55f) * 10f * decay);
 
                 float flash = Mathf.PingPong(elapsed * 4f, 1f);
                 foreach (Image image in fieldImages)
@@ -152,7 +143,7 @@ namespace JokerGO.UI
                 yield return null;
             }
 
-            panel.anchoredPosition = origin;
+            _panel.anchoredPosition = origin;
             foreach (Image image in fieldImages)
             {
                 image.color = UiTheme.FieldBackground;
@@ -160,15 +151,15 @@ namespace JokerGO.UI
 
             yield return new WaitForSeconds(ErrorVisibleSeconds);
             errorLabel.text = string.Empty;
-            feedbackRoutine = null;
+            _feedbackRoutine = null;
         }
 
         private static RectTransform CreateRow(Transform parent, string name)
         {
-            var row = new GameObject(name, typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            GameObject row = new(name, typeof(RectTransform), typeof(HorizontalLayoutGroup));
             row.transform.SetParent(parent, false);
 
-            var layout = row.GetComponent<HorizontalLayoutGroup>();
+            HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
             layout.spacing = 14f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -181,17 +172,17 @@ namespace JokerGO.UI
         public static DicePanelView Author(Transform canvasParent)
         {
             RectTransform panel = UiFactory.CreatePanel(canvasParent, "DicePanel", UiTheme.PanelBackground);
-            panel.anchorMin = new Vector2(0f, 1f);
-            panel.anchorMax = new Vector2(0f, 1f);
-            panel.pivot = new Vector2(0f, 1f);
-            panel.anchoredPosition = new Vector2(24f, -24f);
-            panel.sizeDelta = new Vector2(PanelWidth, 0f);
+            panel.anchorMin = new(0f, 1f);
+            panel.anchorMax = new(0f, 1f);
+            panel.pivot = new(0f, 1f);
+            panel.anchoredPosition = new(24f, -24f);
+            panel.sizeDelta = new(PanelWidth, 0f);
 
-            var view = panel.gameObject.AddComponent<DicePanelView>();
+            DicePanelView view = panel.gameObject.AddComponent<DicePanelView>();
             view.interactivity = panel.gameObject.AddComponent<CanvasGroup>();
 
-            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(20, 20, 16, 20);
+            VerticalLayoutGroup layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new(20, 20, 16, 20);
             layout.spacing = 14f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;

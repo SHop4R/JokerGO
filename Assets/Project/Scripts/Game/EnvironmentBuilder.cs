@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace JokerGO.Game
+namespace JokerGO.Game.Project.Scripts.Game
 {
     /// <summary>
     /// Procedural orchard dressing around the path: prefab trees, bushes and rocks

@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using JokerGO.Game.Fx;
-using JokerGO.Game.Utils;
+using JokerGO.Game.Project.Scripts.Game.Fx;
+using JokerGO.Game.Project.Scripts.Game.Utils;
 using UnityEngine;
+using UnityEngine.Pool;
 
-namespace JokerGO.Game.Dice
+namespace JokerGO.Game.Project.Scripts.Game.Dice
 {
     /// <summary>
     /// Arranges N pooled dice in front of the token, staggers their tumbles,
@@ -62,7 +63,7 @@ namespace JokerGO.Game.Dice
         private IEnumerator ShowRoutine(IReadOnlyList<int> values, IReadOnlyList<Vector3> restPositions,
             Action onAllSettled, Action<Vector3> onDieImpact)
         {
-            var pending = new List<Coroutine>(values.Count);
+            List<Coroutine> pending = ListPool<Coroutine>.Get();
             for (int i = 0; i < values.Count; i++)
             {
                 Vector3 rest = restPositions[i];
@@ -87,6 +88,8 @@ namespace JokerGO.Game.Dice
             {
                 yield return tumble;
             }
+
+            ListPool<Coroutine>.Release(pending);
 
             yield return WaitHelper.WaitForSeconds(SettledBeat);
             onAllSettled?.Invoke();

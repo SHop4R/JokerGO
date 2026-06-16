@@ -1,12 +1,7 @@
 {
-    "name": "JokerGO.UI",
-    "rootNamespace": "JokerGO.UI",
-    "references": [
-        "JokerGO.Core",
-        "JokerGO.Pooling",
-        "UnityEngine.UI",
-        "Unity.TextMeshPro"
-    ],
+    "name": "JokerGO.Pooling",
+    "rootNamespace": "JokerGO.Pooling",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-namespace JokerGO.Game.Tweening
+namespace JokerGO.Game.Project.Scripts.Game.Tweening
 {
     /// <summary>
     /// Composable coroutine tweens. Routines are plain IEnumerators so callers can

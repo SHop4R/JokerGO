@@ -1,29 +1,26 @@
 using System;
 using System.Collections.Generic;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Immutable item counts. <see cref="Add"/> returns a new instance.</summary>
     public sealed class Inventory
     {
-        public static readonly Inventory Empty = new Inventory(new Dictionary<ItemType, int>());
+        public static readonly Inventory Empty = new(new());
 
-        private readonly Dictionary<ItemType, int> counts;
+        private readonly Dictionary<ItemType, int> _counts;
 
-        private Inventory(Dictionary<ItemType, int> counts)
-        {
-            this.counts = counts;
-        }
+        private Inventory(Dictionary<ItemType, int> counts) => _counts = counts;
 
-        public int Get(ItemType type) => counts.TryGetValue(type, out int amount) ? amount : 0;
+        public int Get(ItemType type) => _counts.GetValueOrDefault(type, 0);
 
         public Inventory Add(ItemStack stack)
         {
-            var next = new Dictionary<ItemType, int>(counts)
+            Dictionary<ItemType, int> next = new(_counts)
             {
                 [stack.Type] = Get(stack.Type) + stack.Amount
             };
-            return new Inventory(next);
+            return new(next);
         }
 
         public static Inventory FromCounts(int apples, int pears, int strawberries)
@@ -32,7 +29,7 @@ namespace JokerGO.Core
             RequireNonNegative(pears, nameof(pears));
             RequireNonNegative(strawberries, nameof(strawberries));
 
-            return new Inventory(new Dictionary<ItemType, int>
+            return new Inventory(new()
             {
                 [ItemType.Apple] = apples,
                 [ItemType.Pear] = pears,
@@ -43,10 +40,7 @@ namespace JokerGO.Core
         private static void RequireNonNegative(int count, string parameterName)
         {
             if (count < 0)
-            {
-                throw new ArgumentOutOfRangeException(parameterName, count,
-                    "Inventory counts cannot be negative.");
-            }
+                throw new ArgumentOutOfRangeException(parameterName, count, "Inventory counts cannot be negative.");
         }
     }
 }

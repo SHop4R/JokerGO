@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace JokerGO.Game.ObjectPool
+namespace JokerGO.Pooling.Project.Scripts.Pooling
 {
     /// <summary>Configuration for one <see cref="Pool{T}"/>: prefab, sizes and pre-generation.</summary>
     [Serializable]

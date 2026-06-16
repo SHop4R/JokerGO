@@ -1,19 +1,17 @@
 using System;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>An immutable quantity of a single item type.</summary>
     public readonly struct ItemStack : IEquatable<ItemStack>
     {
-        public ItemType Type { get; }
-        public int Amount { get; }
+        public ItemType Type{ get; }
+        public int Amount{ get; }
 
         public ItemStack(ItemType type, int amount)
         {
             if (amount <= 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(amount), amount, "Item amount must be positive.");
-            }
 
             Type = type;
             Amount = amount;

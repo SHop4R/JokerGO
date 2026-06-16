@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace JokerGO.Game.Utils
+namespace JokerGO.Game.Project.Scripts.Game.Utils
 {
     /// <summary>
     /// An abstract class that provides a singleton pattern for <see cref="MonoBehaviour"/> derived classes.

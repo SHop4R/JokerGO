@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>
     /// Pure path math: which tiles a token visits for a roll, wrapping past the
@@ -28,7 +28,7 @@ namespace JokerGO.Core
                 throw new ArgumentOutOfRangeException(nameof(steps), steps, "Steps must be positive.");
             }
 
-            var path = new int[steps];
+            int[] path = new int[steps];
             for (int i = 1; i <= steps; i++)
             {
                 path[i - 1] = (currentIndex + i) % tileCount;

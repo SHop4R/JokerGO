@@ -1,4 +1,4 @@
-namespace JokerGO.Core
+namespace JokerGO.Core.Project.Scripts.Core
 {
     /// <summary>Persistence boundary. Implementations decide where and how SaveData is stored.</summary>
     public interface ISaveRepository

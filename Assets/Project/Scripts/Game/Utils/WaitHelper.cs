@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace JokerGO.Game.Utils
+namespace JokerGO.Game.Project.Scripts.Game.Utils
 {
     /// <summary>
     /// Caches <see cref="UnityEngine.WaitForSeconds"/> instances so repeated waits of
@@ -13,11 +13,11 @@ namespace JokerGO.Game.Utils
 
         public static WaitForSeconds WaitForSeconds(float seconds)
         {
-            if (!WaitCache.TryGetValue(seconds, out WaitForSeconds wait))
-            {
-                wait = new WaitForSeconds(seconds);
-                WaitCache.Add(seconds, wait);
-            }
+            if (WaitCache.TryGetValue(seconds, out WaitForSeconds wait)) 
+                return wait;
+            
+            wait = new(seconds);
+            WaitCache.Add(seconds, wait);
 
             return wait;
         }
