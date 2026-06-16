@@ -30,7 +30,10 @@ A **3D single-player board game** inspired by *Monopoly GO*, *Dice Dreams* and *
 
 Built with **pure C#** domain logic and **Unity 6** presentation, adhering to SOLID principles with **zero third-party plugins** — every visual is a procedural primitive or a code-driven effect.
 
-> 🎬 **Gameplay video:** _link here_
+> 🎬 **Gameplay video:** 
+https://github.com/user-attachments/assets/c664b00c-0bf0-4ce2-936a-c7f7905948dd
+
+
 
 ---
 
