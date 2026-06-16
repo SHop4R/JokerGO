@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="200" viewBox="0 0 780 200" font-family="'Courier New', 'Menlo', monospace" font-size="20" font-weight="bold" xml:space="preserve">
+  <defs>
+    <linearGradient id="jokerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7b2fff"/>
+      <stop offset="100%" stop-color="#00d4ff"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#jokerGrad)">
+    <text x="20" y="40" xml:space="preserve">     ██╗ ██████╗ ██╗  ██╗███████╗██████╗     ██████╗  ██████╗</text>
+    <text x="20" y="68" xml:space="preserve">     ██║██╔═══██╗██║ ██╔╝██╔════╝██╔══██╗   ██╔════╝ ██╔═══██╗</text>
+    <text x="20" y="96" xml:space="preserve">     ██║██║   ██║█████╔╝ █████╗  ██████╔╝   ██║  ███╗██║   ██║</text>
+    <text x="20" y="124" xml:space="preserve">██   ██║██║   ██║██╔═██╗ ██╔══╝  ██╔══██╗   ██║   ██║██║   ██║</text>
+    <text x="20" y="152" xml:space="preserve">╚█████╔╝╚██████╔╝██║  ██╗███████╗██║  ██║   ╚██████╔╝╚██████╔╝</text>
+    <text x="20" y="180" xml:space="preserve"> ╚════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ╚═════╝  ╚═════╝</text>
+  </g>
+</svg>
