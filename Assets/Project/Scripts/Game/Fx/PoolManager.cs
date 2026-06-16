@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using JokerGO.Game.Project.Scripts.Game.Dice;
 using JokerGO.Pooling.Project.Scripts.Pooling;
 using JokerGO.Game.Project.Scripts.Game.Utils;
@@ -68,7 +69,7 @@ namespace JokerGO.Game.Project.Scripts.Game.Fx
         }
 
         /// <summary>Third-party effects ship with varied scaling modes; hierarchy scaling
-        /// lets one pooled prefab serve small and large moments via transform scale.</summary>
+        /// lets one pooled prefab serve small and large moments via a transform scale.</summary>
         private static void EnsureHierarchyScaling(ParticleSystem root)
         {
             foreach (ParticleSystem system in root.GetComponentsInChildren<ParticleSystem>())
@@ -96,11 +97,8 @@ namespace JokerGO.Game.Project.Scripts.Game.Fx
 
         private static IEnumerator ReturnParticleAfterDuration(ParticleSystem ps, Action onReturn)
         {
-            float longest = 0f;
-            foreach (ParticleSystem system in ps.GetComponentsInChildren<ParticleSystem>())
-            {
-                longest = Mathf.Max(longest, system.main.duration + system.main.startLifetime.constantMax);
-            }
+            float longest = ps.GetComponentsInChildren<ParticleSystem>()
+                .Aggregate(0f, (current, system) => Mathf.Max(current, system.main.duration + system.main.startLifetime.constantMax));
 
             yield return WaitHelper.WaitForSeconds(longest);
             onReturn.Invoke();

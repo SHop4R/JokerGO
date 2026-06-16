@@ -14,7 +14,11 @@ namespace JokerGO.Game.Project.Scripts.Game
         public const float GroundTopY = -0.16f;
 
         private const int RandomSeed = 7;
-        private const float PathClearance = 3.9f;
+
+        /// <summary>Minimum side distance from the path for any prop. Kept just past the dice
+        /// tray's reach (side offset ~3.4 + cluster + canopy margin) so dice don't land behind
+        /// a tree, while keeping the orchard close to the path.</summary>
+        private const float PathClearance = 6f;
         private const float ScatterWidth = 11f;
 
         [SerializeField] private GameObject treePrefab;
